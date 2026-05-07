@@ -38,7 +38,7 @@ export const projects: Project[] = [
     stack: ["NextJS","ThreeJS","Gemini API"],
     github: "https://github.com/eulerbutcooler/wikisillygoose",
     live: "https://wikisillygoose.eulerbutcooler.tech/",
-    year:"2026",
+    year:"2025",
     tag: "Fullstack",
     featured: true,
   },
