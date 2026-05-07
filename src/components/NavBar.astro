@@ -1,0 +1,135 @@
+---
+// NavBar — compact personal header bar
+---
+
+<nav id="navbar">
+  <!-- AM monogram → extreme left -->
+  <a href="/" id="nav-monogram">AM</a>
+
+  <!-- Links pushed to the right -->
+  <div id="nav-links">
+    <a href="/blogs">Blogs</a>
+    <a href="/projects">Projects</a>
+    <a href="mailto:eulerbutcooler@gmail.com">Email</a>
+    <a href="https://github.com/eulerbutcooler" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://linkedin.com/in/amaan-pathan" target="_blank" rel="noopener">LinkedIn</a>
+  </div>
+
+  <!-- Dark mode toggle -->
+  <button id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+    <!-- Sun — shown in dark mode (click to go light) -->
+    <svg id="icon-sun" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="10" y1="1"  x2="10" y2="3.5"  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="10" y1="16.5" x2="10" y2="19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="1"  y1="10" x2="3.5"  y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="16.5" y1="10" x2="19" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="3.5" y1="3.5" x2="5.5" y2="5.5"   stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="14.5" y1="14.5" x2="16.5" y2="16.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="14.5" y1="5.5" x2="16.5" y2="3.5"  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="3.5" y1="16.5" x2="5.5" y2="14.5"  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <!-- Moon — shown in light mode (click to go dark) -->
+    <svg id="icon-moon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M15.5 12.5A7 7 0 0 1 7.5 4.5a7 7 0 1 0 8 8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</nav>
+
+<script>
+  (() => {
+    const btn  = document.getElementById("theme-toggle")!;
+    const sun  = document.getElementById("icon-sun")!;
+    const moon = document.getElementById("icon-moon")!;
+    const root = document.documentElement;
+
+    function apply(dark: boolean) {
+      root.setAttribute("data-theme", dark ? "dark" : "light");
+      // Sun visible in dark mode, moon visible in light mode
+      sun.style.display  = dark ? "block" : "none";
+      moon.style.display = dark ? "none"  : "block";
+      localStorage.setItem("theme", dark ? "dark" : "light");
+    }
+
+    // Sync with whatever Layout's inline script already set
+    apply(root.getAttribute("data-theme") === "dark");
+
+    btn.addEventListener("click", () => {
+      apply(root.getAttribute("data-theme") !== "dark");
+    });
+  })();
+</script>
+
+<style>
+  #navbar {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border);
+    max-width: var(--max-w);
+    margin: 0 auto;
+  }
+
+  /* AM monogram — sits at the very left edge */
+  #nav-monogram {
+    font-family: var(--font-doto);
+    font-variation-settings: "ROND" 0;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--blue);
+    text-decoration: none;
+    flex-shrink: 0;
+    /* push everything else to the right */
+    margin-right: auto;
+  }
+
+  /* Nav links group */
+  #nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+
+  #nav-links a {
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--blue-dim);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  #nav-links a:hover {
+    color: var(--blue);
+  }
+
+  /* Dark mode toggle */
+  #theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    color: var(--blue-dim);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    transition: color 0.15s;
+  }
+
+  #theme-toggle:hover {
+    color: var(--blue);
+  }
+
+  #theme-toggle svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+  }
+
+  @media (max-width: 640px) {
+    #nav-links { gap: 16px; }
+    #nav-links a:not([href="/blogs"]):not([href="/projects"]) { display: none; }
+  }
+</style>

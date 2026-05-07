@@ -1,0 +1,214 @@
+---
+import Layout from "../layouts/Layout.astro";
+import NavBar from "../components/NavBar.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import Footer from "../components/Footer.astro";
+import { projects } from "../data/projects";
+
+const tags = ["All", ...Array.from(new Set(projects.map((p) => p.tag)))];
+---
+
+<Layout
+  title="Projects — eulerbutcooler"
+  description="Things I've built — systems, tooling, and web."
+>
+  <div id="site-wrap">
+    <NavBar />
+
+    <!-- Hero -->
+    <section id="projects-hero">
+      <div id="projects-hero-inner">
+        <span class="label">Work —</span>
+        <h1 id="projects-title">THINGS<br />I'VE BUILT.</h1>
+        <p id="projects-sub">
+          Systems · Tooling · Web.<br />
+          Mostly Go, sometimes TypeScript.
+        </p>
+      </div>
+    </section>
+
+    <!-- Filter -->
+    <section id="filter-bar">
+      <div id="filter-inner">
+        <span class="section-label">[Filter]</span>
+        <div id="filter-tags">
+          {tags.map((t) => (
+            <button class={`tag-btn${t === "All" ? " active" : ""}`} data-tag={t}>
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Projects list -->
+    <section id="projects-section">
+      <div id="projects-inner">
+        <span class="section-label">[{projects.length} projects]</span>
+        <div id="projects-list">
+          {projects.map((p) => (
+            <div class="project-wrap" data-tag={p.tag}>
+              <ProjectCard
+                index={p.index}
+                title={p.title}
+                description={p.description}
+                stack={p.stack}
+                github={p.github}
+                live={p.live}
+                year={p.year}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+    <Footer />
+  </div>
+</Layout>
+
+<script>
+  (() => {
+    const btns = document.querySelectorAll<HTMLButtonElement>(".tag-btn");
+    const wraps = document.querySelectorAll<HTMLDivElement>(".project-wrap");
+
+    btns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tag = btn.dataset.tag!;
+        btns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        wraps.forEach((w) => {
+          w.style.display = tag === "All" || w.dataset.tag === tag ? "" : "none";
+        });
+      });
+    });
+  })();
+</script>
+
+<style>
+  #site-wrap {
+    padding: 0 24px;
+    max-width: calc(var(--max-w) + 48px);
+    margin: 0 auto;
+  }
+
+  /* Hero */
+  #projects-hero { border-bottom: 1px solid var(--border); }
+
+  #projects-hero-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 48px 0 40px;
+  }
+
+  .label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--blue-dim);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  #projects-title {
+    font-family: var(--font-doto);
+    font-variation-settings: "ROND" 0;
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 0.95;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 20px;
+  }
+
+  #projects-sub {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.75;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+    max-width: 480px;
+  }
+
+  /* Filter */
+  #filter-bar { border-bottom: 1px solid var(--border); }
+
+  #filter-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 16px 0;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 0 24px;
+    align-items: center;
+  }
+
+  #filter-tags {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tag-btn {
+    background: none;
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--blue-dim);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+
+  .tag-btn:hover { color: var(--blue); border-color: var(--blue); }
+
+  .tag-btn.active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: var(--bg);
+  }
+
+  /* Projects list */
+  #projects-section { border-bottom: 1px solid var(--border); }
+
+  #projects-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 28px 0;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 0 24px;
+    align-items: start;
+  }
+
+  .section-label {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--blue-dim);
+    padding-top: 20px;
+  }
+
+  #projects-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+  }
+
+  /* The ProjectCard component handles its own border-bottom,
+     hide the last one via the wrapper */
+  .project-wrap:last-child > :global(.project-row) {
+    border-bottom: none;
+  }
+
+  @media (max-width: 640px) {
+    #projects-hero-inner { padding: 32px 0 28px; }
+    #filter-inner, #projects-inner { grid-template-columns: 1fr; gap: 16px; }
+    .section-label { padding-top: 0; }
+    #projects-title { font-size: clamp(2.4rem, 13vw, 4rem); }
+  }
+</style>

@@ -1,0 +1,62 @@
+---
+// Callout — inline tip/warning/idea block for MDX posts
+interface Props {
+  type?: "idea" | "warning" | "note";
+}
+const { type = "note" } = Astro.props;
+
+const icons = { idea: "→", warning: "!", note: "·" };
+const icon = icons[type];
+---
+
+<aside class={`callout callout--${type}`}>
+  <span class="callout-icon">{icon}</span>
+  <div class="callout-body">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .callout {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 0 12px;
+    padding: 14px 16px;
+    margin: 1.8em 0;
+    border-left: 2px solid var(--blue-dim);
+    background: var(--blue-subtle);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--blue-mid);
+  }
+
+  .callout--warning {
+    border-left-color: var(--blue);
+    color: var(--blue);
+  }
+
+  .callout--idea {
+    border-left-color: var(--blue-mid);
+  }
+
+  .callout-icon {
+    font-size: 13px;
+    color: var(--blue-dim);
+    padding-top: 1px;
+    flex-shrink: 0;
+  }
+
+  .callout--warning .callout-icon {
+    color: var(--blue);
+  }
+
+  .callout-body :global(p) {
+    margin: 0;
+    color: inherit;
+    font-size: inherit;
+    text-transform: inherit;
+  }
+</style>

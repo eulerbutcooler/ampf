@@ -1,0 +1,151 @@
+---
+// RecentBlogs — latest 3 posts from content collection
+import { getCollection } from "astro:content";
+
+const allPosts = await getCollection("blog", ({ data }) => data.draft !== true);
+const posts = allPosts
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
+  .slice(0, 3);
+---
+
+<section id="blogs">
+  <div id="blogs-inner">
+    <span class="section-label">[Writing]</span>
+
+    <div id="blogs-list">
+      {posts.map((post) => (
+        <a href={`/blog/${post.id}`} class="blog-row">
+          <span class="blog-tag">[{post.data.tag}]</span>
+          <span class="blog-title">{post.data.title}</span>
+          <span class="blog-meta">
+            <span class="blog-date">{post.data.date.slice(0, 7)}</span>
+            <span class="blog-arrow">→</span>
+          </span>
+        </a>
+      ))}
+
+      <a href="/blogs" class="blog-row blog-row--all">
+        <span class="blog-tag"></span>
+        <span class="blog-title blog-all">All posts →</span>
+        <span class="blog-meta"></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  #blogs {
+    border-bottom: 1px solid var(--border);
+  }
+
+  #blogs-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 28px 0;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 0 24px;
+    align-items: start;
+  }
+
+  .section-label {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--blue-dim);
+    padding-top: 14px;
+  }
+
+  #blogs-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+  }
+
+  .blog-row {
+    display: grid;
+    grid-template-columns: 90px 1fr auto;
+    gap: 0 16px;
+    align-items: center;
+    padding: 13px 8px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--blue);
+    transition: background 0.12s;
+    margin: 0 -8px;
+  }
+
+  .blog-row:last-child {
+    border-bottom: none;
+  }
+
+  .blog-row:hover {
+    background: var(--blue-subtle);
+  }
+
+  .blog-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--blue-dim);
+    white-space: nowrap;
+  }
+
+  .blog-title {
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--blue);
+  }
+
+  .blog-all {
+    color: var(--blue-dim);
+    font-size: 11px;
+  }
+
+  .blog-row--all:hover .blog-all {
+    color: var(--blue);
+  }
+
+  .blog-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .blog-date {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--blue-dim);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .blog-arrow {
+    font-size: 13px;
+    color: var(--blue-dim);
+    transition: transform 0.15s, color 0.15s;
+  }
+
+  .blog-row:hover .blog-arrow {
+    transform: translateX(3px);
+    color: var(--blue);
+  }
+
+  @media (max-width: 640px) {
+    #blogs-inner {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .section-label { padding-top: 0; }
+
+    .blog-row {
+      grid-template-columns: 1fr auto;
+    }
+
+    .blog-tag { display: none; }
+  }
+</style>

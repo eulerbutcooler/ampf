@@ -1,0 +1,48 @@
+---
+// Footer — mobile-only bar with secondary nav links
+---
+
+<footer id="footer">
+  <div id="footer-inner">
+    <a href="mailto:eulerbutcooler@gmail.com" class="foot-link">Email</a>
+    <a href="https://github.com/eulerbutcooler" class="foot-link" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://linkedin.com/in/amaan-pathan" class="foot-link" target="_blank" rel="noopener">LinkedIn</a>
+  </div>
+</footer>
+
+<style>
+  /* Hidden on desktop — only shown on mobile */
+  #footer {
+    display: none;
+  }
+
+  @media (max-width: 640px) {
+    #footer {
+      display: block;
+      border-top: 1px solid var(--border);
+    }
+
+    #footer-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .foot-link {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--blue-dim);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .foot-link:hover {
+      color: var(--blue);
+    }
+  }
+</style>

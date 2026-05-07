@@ -1,0 +1,290 @@
+---
+title: "Hexagonal Architecture in a Go Monorepo"
+description: "A practical walkthrough of ports & adapters in Go.
+From project layout to dependency injection."
+date: "2026-05-06"
+tag: "Architecture"
+---
+
+Most Go projects I've seen start clean and get messy fast. A handler that started as 15 lines quietly absorbs database calls, business rules, and HTTP concerns until you can't test any of it without spinning up Postgres.
+
+Hexagonal Architecture (a.k.a. Ports & Adapters) is a way out. This is how I structure Go services that stay testable as they grow.
+
+## The core idea
+
+Your **domain** — business logic, entities, rules — lives at the centre. It knows nothing about HTTP, databases, or message queues. Those are **adapters** that plug into **ports** (interfaces the domain defines).
+
+<Callout type="idea">
+  Think of ports as electrical sockets: your domain defines the socket shape, adapters are the plugs. You can swap plugs (swap PostgreSQL for SQLite in tests) without rewiring the house.
+</Callout>
+
+## Project layout
+
+<FileTree entries={[
+  { name: "cmd/api/main.go", note: "wires everything together" },
+  { name: "internal/domain/", note: "pure business logic — no imports from infra" },
+  { name: "internal/domain/workflow.go", note: "entities + domain services" },
+  { name: "internal/ports/", note: "interfaces (the sockets)" },
+  { name: "internal/ports/repository.go", note: "what the domain needs from storage" },
+  { name: "internal/ports/notifier.go", note: "what the domain needs to send events" },
+  { name: "internal/adapters/postgres/", note: "implements ports.Repository" },
+  { name: "internal/adapters/nats/", note: "implements ports.Notifier" },
+  { name: "internal/app/", note: "application services — orchestrates domain + ports" },
+]} />
+
+## Defining a port
+
+A port is just a Go interface. It lives in the domain layer and describes what the domain *needs* — not what infrastructure *provides*.
+
+```go
+// internal/ports/repository.go
+package ports
+
+import (
+    "context"
+    "github.com/you/iris/internal/domain"
+)
+
+type WorkflowRepository interface {
+    Save(ctx context.Context, w domain.Workflow) error
+    FindByID(ctx context.Context, id string) (domain.Workflow, error)
+    ListPending(ctx context.Context) ([]domain.Workflow, error)
+}
+```
+
+Notice: no `*sql.DB`, no `pgx`, no nothing. The domain doesn't care how data is stored.
+
+## The domain entity
+
+```go
+// internal/domain/workflow.go
+package domain
+
+import (
+    "errors"
+    "time"
+)
+
+type Status string
+
+const (
+    StatusPending  Status = "pending"
+    StatusRunning  Status = "running"
+    StatusDone     Status = "done"
+    StatusFailed   Status = "failed"
+)
+
+type Workflow struct {
+    ID        string
+    Name      string
+    Status    Status
+    CreatedAt time.Time
+    UpdatedAt time.Time
+}
+
+// domain logic lives here, not in handlers
+func (w *Workflow) Start() error {
+    if w.Status != StatusPending {
+        return errors.New("workflow must be pending to start")
+    }
+    w.Status = StatusRunning
+    w.UpdatedAt = time.Now()
+    return nil
+}
+
+func (w *Workflow) Complete() error {
+    if w.Status != StatusRunning {
+        return errors.New("workflow must be running to complete")
+    }
+    w.Status = StatusDone
+    w.UpdatedAt = time.Now()
+    return nil
+}
+```
+
+<Callout type="warning">
+  Keep your domain package import-free from infrastructure. If you see `database/sql` or `net/http` in `internal/domain/`, something has leaked.
+</Callout>
+
+## An application service
+
+The application layer orchestrates — it calls domain logic and uses ports to persist or notify.
+
+```go
+// internal/app/workflow_service.go
+package app
+
+import (
+    "context"
+    "fmt"
+
+    "github.com/you/iris/internal/domain"
+    "github.com/you/iris/internal/ports"
+)
+
+type WorkflowService struct {
+    repo     ports.WorkflowRepository
+    notifier ports.Notifier
+}
+
+func NewWorkflowService(
+    repo ports.WorkflowRepository,
+    notifier ports.Notifier,
+) *WorkflowService {
+    return &WorkflowService{repo: repo, notifier: notifier}
+}
+
+func (s *WorkflowService) StartWorkflow(ctx context.Context, id string) error {
+    w, err := s.repo.FindByID(ctx, id)
+    if err != nil {
+        return fmt.Errorf("find workflow: %w", err)
+    }
+
+    if err := w.Start(); err != nil {
+        return fmt.Errorf("start workflow: %w", err)      // domain rule enforced here
+    }
+
+    if err := s.repo.Save(ctx, w); err != nil {
+        return fmt.Errorf("save workflow: %w", err)
+    }
+
+    s.notifier.Publish(ctx, "workflow.started", w.ID)
+    return nil
+}
+```
+
+## The Postgres adapter
+
+The adapter implements the port interface. This is the only place Postgres knowledge lives.
+
+```go
+// internal/adapters/postgres/workflow_repo.go
+package postgres
+
+import (
+    "context"
+    "fmt"
+
+    "github.com/jackc/pgx/v5/pgxpool"
+    "github.com/you/iris/internal/domain"
+)
+
+type WorkflowRepo struct {
+    db *pgxpool.Pool
+}
+
+func NewWorkflowRepo(db *pgxpool.Pool) *WorkflowRepo {
+    return &WorkflowRepo{db: db}
+}
+
+func (r *WorkflowRepo) FindByID(ctx context.Context, id string) (domain.Workflow, error) {
+    var w domain.Workflow
+    err := r.db.QueryRow(ctx,
+        `SELECT id, name, status, created_at, updated_at
+         FROM workflows WHERE id = $1`, id,
+    ).Scan(&w.ID, &w.Name, &w.Status, &w.CreatedAt, &w.UpdatedAt)
+    if err != nil {
+        return w, fmt.Errorf("query workflow: %w", err)
+    }
+    return w, nil
+}
+
+// Save, ListPending ...
+```
+
+## Wiring it up in main
+
+```go
+// cmd/api/main.go
+package main
+
+import (
+    "log"
+    "os"
+
+    "github.com/jackc/pgx/v5/pgxpool"
+    "github.com/you/iris/internal/adapters/nats"
+    "github.com/you/iris/internal/adapters/postgres"
+    "github.com/you/iris/internal/app"
+)
+
+func main() {
+    db, err := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    repo     := postgres.NewWorkflowRepo(db)
+    notifier := nats.NewNotifier(os.Getenv("NATS_URL"))
+    svc      := app.NewWorkflowService(repo, notifier)
+
+    // pass svc into HTTP handlers, gRPC servers, etc.
+    startHTTPServer(svc)
+}
+```
+
+`main.go` is the only place that knows about Postgres, NATS, and HTTP simultaneously. Everything else is cleanly separated.
+
+## Testing without infrastructure
+
+The real payoff: you can test `WorkflowService` with a fake repository — no Docker, no Postgres.
+
+```go
+// internal/app/workflow_service_test.go
+package app_test
+
+import (
+    "context"
+    "testing"
+
+    "github.com/you/iris/internal/app"
+    "github.com/you/iris/internal/domain"
+)
+
+// in-memory fake — implements ports.WorkflowRepository
+type fakeRepo struct {
+    store map[string]domain.Workflow
+}
+
+func (f *fakeRepo) FindByID(_ context.Context, id string) (domain.Workflow, error) {
+    return f.store[id], nil
+}
+func (f *fakeRepo) Save(_ context.Context, w domain.Workflow) error {
+    f.store[w.ID] = w
+    return nil
+}
+func (f *fakeRepo) ListPending(_ context.Context) ([]domain.Workflow, error) {
+    return nil, nil
+}
+
+func TestStartWorkflow(t *testing.T) {
+    repo := &fakeRepo{store: map[string]domain.Workflow{
+        "wf-1": {ID: "wf-1", Status: domain.StatusPending},
+    }}
+    svc := app.NewWorkflowService(repo, &fakeNotifier{})
+
+    if err := svc.StartWorkflow(context.Background(), "wf-1"); err != nil {
+        t.Fatal(err)
+    }
+
+    if repo.store["wf-1"].Status != domain.StatusRunning {
+        t.Error("expected workflow to be running")
+    }
+}
+```
+
+<Callout type="idea">
+  Fast unit tests with zero infrastructure = tests you'll actually run. This is the main practical win of hexagonal architecture.
+</Callout>
+
+## When not to use it
+
+Hexagonal architecture adds indirection. For a 200-line script or a simple CRUD API, it's overkill. Reach for it when:
+
+- You have real business rules that need to be tested in isolation
+- You expect to swap infrastructure (e.g. SQLite in dev, Postgres in prod)
+- Multiple teams touch the same codebase and need clear boundaries
+
+---
+
+The full source for Hermes, my workflow automation platform is structured this way. It's made adding new triggers, adapters, and executors significantly easier than if I'd put everything in handlers from the start.

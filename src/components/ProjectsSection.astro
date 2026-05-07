@@ -1,0 +1,105 @@
+---
+import ProjectCard from "./ProjectCard.astro";
+import { projects } from "../data/projects";
+
+const featured = projects.filter((p) => p.featured);
+---
+
+<section id="projects">
+  <div id="projects-inner">
+    <span class="section-label">[Work]</span>
+
+    <div id="projects-list">
+      {featured.map((p) => (
+        <ProjectCard
+          index={p.index}
+          title={p.title}
+          description={p.description}
+          stack={p.stack}
+          github={p.github}
+          live={p.live}
+          year={p.year}
+        />
+      ))}
+
+      <a href="/projects" class="all-row">
+        <span class="all-label"></span>
+        <span class="all-text">All projects →</span>
+        <span></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  #projects {
+    border-bottom: 1px solid var(--border);
+  }
+
+  #projects-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 28px 0;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 0 24px;
+    align-items: start;
+  }
+
+  .section-label {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--blue-dim);
+    padding-top: 20px;
+  }
+
+  #projects-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #projects-list > :global(.project-row:first-child) {
+    border-top: 1px solid var(--border);
+  }
+
+  #projects-list > :global(.project-row:last-child) {
+    border-bottom: none;
+  }
+
+  .all-row {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    gap: 0 20px;
+    align-items: center;
+    padding: 14px 8px;
+    text-decoration: none;
+    color: var(--blue-dim);
+    transition: background 0.12s, color 0.12s;
+    margin: 0 -8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .all-row:hover {
+    background: var(--blue-subtle);
+    color: var(--blue);
+  }
+
+  .all-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 640px) {
+    #projects-inner {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .section-label {
+      padding-top: 0;
+    }
+  }
+</style>

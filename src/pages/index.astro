@@ -1,11 +1,39 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import Layout from "../layouts/Layout.astro";
+import NavBar from "../components/NavBar.astro";
+import Hero from "../components/Hero.astro";
+import AboutGrid from "../components/AboutGrid.astro";
+import RecentBlogs from "../components/RecentBlogs.astro";
+import ProjectsSection from "../components/ProjectsSection.astro";
+import Footer from "../components/Footer.astro";
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
-<Layout>
-	<Welcome />
+<Layout
+  title="eulerbutcooler"
+  description="Full-stack developer building fast, reliable systems at the edge of the web."
+>
+  <div id="site-wrap">
+    <NavBar />
+    <Hero />
+    <AboutGrid />
+    <RecentBlogs />
+    <ProjectsSection />
+    <Footer />
+
+  </div>
 </Layout>
+
+<style>
+  #site-wrap {
+    padding: 0 24px;
+    max-width: calc(var(--max-w) + 48px);
+    margin: 0 auto;
+  }
+
+  /* Navbar, Hero, etc. all use max-w internally, site-wrap just adds side padding */
+  #site-wrap > :global(*) {
+    padding-left: 0;
+    padding-right: 0;
+  }
+</style>

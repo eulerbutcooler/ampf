@@ -1,0 +1,53 @@
+---
+// FileTree — renders a file/directory list for MDX posts
+interface Entry {
+  name: string;
+  note?: string;
+}
+interface Props {
+  entries: Entry[];
+}
+const { entries } = Astro.props;
+---
+
+<div class="filetree">
+  {entries.map((e) => (
+    <div class="ft-row">
+      <span class="ft-name">{e.name}</span>
+      {e.note && <span class="ft-note">// {e.note}</span>}
+    </div>
+  ))}
+</div>
+
+<style>
+  .filetree {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    background: var(--blue-subtle);
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    margin: 1.6em 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .ft-row {
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+  }
+
+  .ft-name {
+    color: var(--blue);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .ft-note {
+    color: var(--blue-dim);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+</style>
