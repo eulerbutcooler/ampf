@@ -4,8 +4,8 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "withered-surf-8c3c",
-	"compatibility_date": "2026-05-06",
+	"name": "my-astro-app",
+	"compatibility_date": "2026-05-07",
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
