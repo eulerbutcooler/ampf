@@ -4,303 +4,347 @@ import Layout from "../layouts/Layout.astro";
 import NavBar from "../components/NavBar.astro";
 import Footer from "../components/Footer.astro";
 
-
 // Fetch all non-draft posts, sorted newest first
 const allPosts = await getCollection("blog", ({ data }) => data.draft !== true);
 const posts = allPosts.sort(
-  (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+    (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime(),
 );
 
 const tags = ["All", ...Array.from(new Set(posts.map((p) => p.data.tag)))];
 ---
 
 <Layout
-  title="Writing — eulerbutcooler"
-  description="Essays and notes on systems, infrastructure, and software engineering."
+    title="Writing — eulerbutcooler"
+    description="Essays and notes on systems, infrastructure, and software engineering."
 >
-  <div id="site-wrap">
-    <NavBar />
+    <div id="site-wrap">
+        <NavBar />
 
-    <!-- Page header -->
-    <section id="blogs-hero">
-      <div id="blogs-hero-inner">
-        <div id="blogs-hero-top">
-          <span class="label">Writing —</span>
-          <h1 id="blogs-title">NOTES &amp;<br />ESSAYS.</h1>
-        </div>
-        <p id="blogs-sub">
-          Systems · Infrastructure · Software engineering.<br />
-          Things I figured out the hard way.
-        </p>
-      </div>
-    </section>
+        <!-- Page header -->
+        <section id="blogs-hero">
+            <div id="blogs-hero-inner">
+                <div id="blogs-hero-top">
+                    <span class="label">Writing —</span>
+                    <h1 id="blogs-title">NOTES &amp;<br />ESSAYS.</h1>
+                </div>
+                <p id="blogs-sub">
+                    Systems · Infrastructure · Software engineering.<br />
+                    Things I figured out the hard way.
+                </p>
+            </div>
+        </section>
 
-    <!-- Filter bar -->
-    <section id="filter-bar">
-      <div id="filter-inner">
-        <span class="section-label">[Filter]</span>
-        <div id="filter-tags">
-          {tags.map((t) => (
-            <button class={`tag-btn${t === "All" ? " active" : ""}`} data-tag={t}>
-              {t}
-            </button>
-          ))}
-        </div>
-      </div>
-    </section>
+        <!-- Filter bar -->
+        <section id="filter-bar">
+            <div id="filter-inner">
+                <span class="section-label">[Filter]</span>
+                <div id="filter-tags">
+                    {
+                        tags.map((t) => (
+                            <button
+                                class={`tag-btn${t === "All" ? " active" : ""}`}
+                                data-tag={t}
+                            >
+                                {t}
+                            </button>
+                        ))
+                    }
+                </div>
+            </div>
+        </section>
 
-    <!-- Posts list -->
-    <section id="posts-section">
-      <div id="posts-inner">
-        <span class="section-label">[{posts.length} posts]</span>
-        <div id="posts-list">
-          {posts.map((post) => (
-            <a
-              href={`/blog/${post.id}`}
-              class="post-row"
-              data-tag={post.data.tag}
-            >
-              <span class="post-tag">[{post.data.tag}]</span>
-              <div class="post-body">
-                <span class="post-title">{post.data.title}</span>
-                <p class="post-desc">{post.data.description}</p>
-              </div>
-              <div class="post-right">
-                <span class="post-date">{post.data.date.slice(0, 7)}</span>
-                <span class="post-arrow">→</span>
-              </div>
-            </a>
-          ))}
-        </div>
-      </div>
-    </section>
+        <!-- Posts list -->
+        <section id="posts-section">
+            <div id="posts-inner">
+                <span class="section-label">[{posts.length} posts]</span>
+                <div id="posts-list">
+                    {
+                        posts.map((post) => (
+                            <a
+                                href={`/blog/${post.id}`}
+                                class="post-row"
+                                data-tag={post.data.tag}
+                            >
+                                <span class="post-tag">[{post.data.tag}]</span>
+                                <div class="post-body">
+                                    <span class="post-title">
+                                        {post.data.title}
+                                    </span>
+                                    <p class="post-desc">
+                                        {post.data.description}
+                                    </p>
+                                </div>
+                                <div class="post-right">
+                                    <span class="post-date">
+                                        {post.data.date.slice(0, 7)}
+                                    </span>
+                                    <span class="post-arrow">→</span>
+                                </div>
+                            </a>
+                        ))
+                    }
+                </div>
+            </div>
+        </section>
 
-    <Footer />
-  </div>
+        <Footer />
+    </div>
 </Layout>
 
 <script>
-  (() => {
-    const btns = document.querySelectorAll<HTMLButtonElement>(".tag-btn");
-    const rows = document.querySelectorAll<HTMLAnchorElement>(".post-row");
+    (() => {
+        const btns = document.querySelectorAll<HTMLButtonElement>(".tag-btn");
+        const rows = document.querySelectorAll<HTMLAnchorElement>(".post-row");
 
-    btns.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const tag = btn.dataset.tag!;
-        btns.forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        rows.forEach((row) => {
-          row.style.display = tag === "All" || row.dataset.tag === tag ? "" : "none";
+        btns.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const tag = btn.dataset.tag!;
+                btns.forEach((b) => b.classList.remove("active"));
+                btn.classList.add("active");
+                rows.forEach((row) => {
+                    row.style.display =
+                        tag === "All" || row.dataset.tag === tag ? "" : "none";
+                });
+            });
         });
-      });
-    });
-  })();
+    })();
 </script>
 
 <style>
-  #site-wrap {
-    padding: 0 24px;
-    max-width: calc(var(--max-w) + 48px);
-    margin: 0 auto;
-  }
+    #site-wrap {
+        padding: 0 24px;
+        max-width: calc(var(--max-w) + 48px);
+        margin: 0 auto;
+    }
 
-  /* Hero */
-  #blogs-hero { border-bottom: 1px solid var(--border); }
+    /* Hero */
+    #blogs-hero {
+        border-bottom: 1px solid var(--border);
+    }
 
-  #blogs-hero-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 48px 0 40px;
-  }
+    #blogs-hero-inner {
+        max-width: var(--max-w);
+        margin: 0 auto;
+        padding: 48px 0 40px;
+    }
 
-  #blogs-hero-top { margin-bottom: 20px; }
+    #blogs-hero-top {
+        margin-bottom: 20px;
+    }
 
-  .label {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--blue-dim);
-    display: block;
-    margin-bottom: 4px;
-  }
+    .label {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        display: block;
+        margin-bottom: 4px;
+    }
 
-  #blogs-title {
-    font-family: var(--font-doto);
-    font-variation-settings: "ROND" 0;
-    font-size: clamp(3rem, 8vw, 5.5rem);
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    line-height: 0.95;
-    text-transform: uppercase;
-    color: var(--blue);
-  }
+    #blogs-title {
+        font-family: var(--font-doto);
+        font-variation-settings: "ROND" 0;
+        font-size: clamp(3rem, 8vw, 5.5rem);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        line-height: 0.95;
+        text-transform: uppercase;
+        color: var(--blue);
+    }
 
-  #blogs-sub {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    line-height: 1.75;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: var(--blue-mid);
-    max-width: 480px;
-  }
+    #blogs-sub {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        line-height: 1.75;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--blue-mid);
+        max-width: 480px;
+    }
 
-  /* Filter bar */
-  #filter-bar { border-bottom: 1px solid var(--border); }
+    /* Filter bar */
+    #filter-bar {
+        border-bottom: 1px solid var(--border);
+    }
 
-  #filter-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 16px 0;
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    gap: 0 24px;
-    align-items: center;
-  }
+    #filter-inner {
+        max-width: var(--max-w);
+        margin: 0 auto;
+        padding: 16px 0;
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: 0 24px;
+        align-items: center;
+    }
 
-  #filter-tags {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
+    #filter-tags {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
 
-  .tag-btn {
-    background: none;
-    border: 1px solid var(--border);
-    padding: 4px 12px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--blue-dim);
-    cursor: pointer;
-    transition: background 0.12s, color 0.12s, border-color 0.12s;
-  }
+    .tag-btn {
+        background: none;
+        border: 1px solid var(--border);
+        padding: 4px 12px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        cursor: pointer;
+        transition:
+            background 0.12s,
+            color 0.12s,
+            border-color 0.12s;
+    }
 
-  .tag-btn:hover {
-    color: var(--blue);
-    border-color: var(--blue);
-  }
+    .tag-btn:hover {
+        color: var(--blue);
+        border-color: var(--blue);
+    }
 
-  .tag-btn.active {
-    background: var(--blue);
-    border-color: var(--blue);
-    color: #fff;
-  }
+    .tag-btn.active {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: var(--bg);
+    }
 
-  /* Posts list */
-  #posts-section { border-bottom: 1px solid var(--border); }
+    /* Posts list */
+    #posts-section {
+        border-bottom: 1px solid var(--border);
+    }
 
-  #posts-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 28px 0;
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    gap: 0 24px;
-    align-items: start;
-  }
+    #posts-inner {
+        max-width: var(--max-w);
+        margin: 0 auto;
+        padding: 28px 0;
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: 0 24px;
+        align-items: start;
+    }
 
-  .section-label {
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--blue-dim);
-    padding-top: 14px;
-  }
+    .section-label {
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        padding-top: 14px;
+    }
 
-  #posts-list {
-    display: flex;
-    flex-direction: column;
-    border-top: 1px solid var(--border);
-  }
+    #posts-list {
+        display: flex;
+        flex-direction: column;
+        border-top: 1px solid var(--border);
+    }
 
-  .post-row {
-    display: grid;
-    grid-template-columns: 90px 1fr auto;
-    gap: 0 20px;
-    align-items: start;
-    padding: 18px 8px;
-    border-bottom: 1px solid var(--border);
-    text-decoration: none;
-    color: var(--blue);
-    transition: background 0.12s;
-    margin: 0 -8px;
-    min-height: 90px;
-  }
+    .post-row {
+        display: grid;
+        grid-template-columns: 90px 1fr auto;
+        gap: 0 20px;
+        align-items: start;
+        padding: 18px 8px;
+        border-bottom: 1px solid var(--border);
+        text-decoration: none;
+        color: var(--blue);
+        transition: background 0.12s;
+        margin: 0 -8px;
+        min-height: 90px;
+    }
 
-  .post-row:last-child { border-bottom: none; }
-  .post-row:hover { background: var(--blue-subtle); }
+    .post-row:last-child {
+        border-bottom: none;
+    }
+    .post-row:hover {
+        background: var(--blue-subtle);
+    }
 
-  .post-tag {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--blue-dim);
-    padding-top: 2px;
-    white-space: nowrap;
-  }
+    .post-tag {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        padding-top: 2px;
+        white-space: nowrap;
+    }
 
-  .post-body {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
+    .post-body {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
 
-  .post-title {
-    font-size: 13px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--blue);
-    line-height: 1.4;
-  }
+    .post-title {
+        font-size: 13px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--blue);
+        line-height: 1.4;
+    }
 
-  .post-desc {
-    font-size: 12px;
-    line-height: 1.65;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: var(--blue-mid);
-    max-width: 540px;
-  }
+    .post-desc {
+        font-size: 12px;
+        line-height: 1.65;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--blue-mid);
+        max-width: 540px;
+    }
 
-  .post-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-    padding-top: 2px;
-    flex-shrink: 0;
-  }
+    .post-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+        padding-top: 2px;
+        flex-shrink: 0;
+    }
 
-  .post-date {
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    color: var(--blue-dim);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
+    .post-date {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        color: var(--blue-dim);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
 
-  .post-arrow {
-    font-size: 13px;
-    color: var(--blue-dim);
-    transition: transform 0.15s, color 0.15s;
-  }
+    .post-arrow {
+        font-size: 13px;
+        color: var(--blue-dim);
+        transition:
+            transform 0.15s,
+            color 0.15s;
+    }
 
-  .post-row:hover .post-arrow {
-    transform: translateX(3px);
-    color: var(--blue);
-  }
+    .post-row:hover .post-arrow {
+        transform: translateX(3px);
+        color: var(--blue);
+    }
 
-  /* Responsive */
-  @media (max-width: 640px) {
-    #blogs-hero-inner { padding: 32px 0 28px; }
-    #filter-inner, #posts-inner { grid-template-columns: 1fr; gap: 16px; }
-    .section-label { padding-top: 0; }
-    .post-row { grid-template-columns: 1fr auto; }
-    .post-tag { display: none; }
-    #blogs-title { font-size: clamp(2.4rem, 13vw, 4rem); }
-  }
+    /* Responsive */
+    @media (max-width: 640px) {
+        #blogs-hero-inner {
+            padding: 32px 0 28px;
+        }
+        #filter-inner,
+        #posts-inner {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        .section-label {
+            padding-top: 0;
+        }
+        .post-row {
+            grid-template-columns: 1fr auto;
+        }
+        .post-tag {
+            display: none;
+        }
+        #blogs-title {
+            font-size: clamp(2.4rem, 13vw, 4rem);
+        }
+    }
 </style>
