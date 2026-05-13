@@ -14,7 +14,7 @@ export const projects: Project[] = [
   {
     index: "01",
     title: "Hermes",
-    description: "Automation platform built in Go with a DAG based UI",
+    description: "No-code automation platform built in Go with a DAG based UI",
     stack: ["TypeScript", "React", "Go", "Cloudflare"],
     github: "https://github.com/eulerbutcooler/hermes",
     year: "2026",
@@ -32,20 +32,22 @@ export const projects: Project[] = [
     featured: true,
   },
   {
-    index:'03',
+    index: "03",
     title: "WikiSillyGoose",
-    description: "A travel roulette that brings up interesting places to visit wherever you click on the globe",
-    stack: ["NextJS","ThreeJS","Gemini API"],
+    description:
+      "A travel roulette that brings up interesting places to visit wherever you click on the globe",
+    stack: ["NextJS", "ThreeJS", "Gemini API"],
     github: "https://github.com/eulerbutcooler/wikisillygoose",
     live: "https://wikisillygoose.eulerbutcooler.tech/",
-    year:"2025",
+    year: "2025",
     tag: "Fullstack",
     featured: true,
   },
   {
     index: "04",
     title: "HTTP from Scratch",
-    description: "Implemented a fully functional HTTP/1.1 server from raw TCP sockets",
+    description:
+      "Implemented a fully functional HTTP/1.1 server from raw TCP sockets",
     stack: ["Go", "TCP", "HTTP/1.1"],
     github: "https://github.com/eulerbutcooler/http-from-scratch",
     year: "2026",

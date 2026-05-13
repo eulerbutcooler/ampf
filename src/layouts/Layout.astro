@@ -1,99 +1,111 @@
 ---
 interface Props {
-  title?: string;
-  description?: string;
+    title?: string;
+    description?: string;
 }
 
 const {
-  title = "eulerbutcooler",
-  description = "Full-stack developer building things at the edge of the web.",
+    title = "eulerbutcooler",
+    description = "Full-stack developer building things at the edge of the web.",
 } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <meta name="generator" content={Astro.generator} />
-    <meta name="description" content={description} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary" />
-    <title>{title}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Doto:ROND,wght@0,100..900;1,100..900&family=Share+Tech+Mono&display=swap"
-      rel="stylesheet"
-    />
-    <!-- Prevent flash of wrong theme: read localStorage before first paint -->
-    <script is:inline>
-      (function () {
-        const saved = localStorage.getItem('theme');
-        if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-      })();
-    </script>
-  </head>
-  <body>
-    <slot />
-  </body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+        <meta name="generator" content={Astro.generator} />
+        <meta name="description" content={description} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary" />
+        <title>{title}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Doto:ROND,wght@0,100..900;1,100..900&family=Share+Tech+Mono&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+            rel="stylesheet"
+        />
+        <!-- Prevent flash of wrong theme: read localStorage before first paint -->
+        <script is:inline>
+            (function () {
+                const saved = localStorage.getItem("theme");
+                if (saved === "dark" || !saved) {
+                    document.documentElement.setAttribute("data-theme", "dark");
+                } else if (saved === "light") {
+                    document.documentElement.setAttribute(
+                        "data-theme",
+                        "light",
+                    );
+                }
+            })();
+        </script>
+    </head>
+    <body>
+        <slot />
+    </body>
 </html>
 
 <style is:global>
-  :root {
-    --blue: #1300cc;
-    --blue-mid: rgba(19, 0, 204, 0.82);
-    --blue-dim: rgba(19, 0, 204, 0.65);
-    --blue-subtle: rgba(19, 0, 204, 0.12);
-    --bg: #ffffff;
-    --bg-off: #f5f5ff;
-    --border: rgba(19, 0, 204, 0.14);
-    --font-mono: "Share Tech Mono", "Courier New", monospace;
-    --font-doto: "Doto", monospace;
-    --max-w: 860px;
-  }
+    :root {
+        --blue: #1300cc;
+        --blue-mid: rgba(19, 0, 204, 0.82);
+        --blue-dim: rgba(19, 0, 204, 0.65);
+        --blue-subtle: rgba(19, 0, 204, 0.12);
+        --accent-orange: #e65100;
+        --accent-teal: #00897b;
+        --bg: #ffffff;
+        --bg-off: #f5f5ff;
+        --border: rgba(19, 0, 204, 0.14);
+        --font-mono: "Share Tech Mono", "Courier New", monospace;
+        --font-doto: "Doto", monospace;
+        --font-sans: "Open Sans", sans-serif;
+        --max-w: 860px;
+    }
 
-  /* Dark mode — bg becomes blue, text becomes white */
-  [data-theme="dark"] {
-    --blue: #ffffff;
-    --blue-mid: rgba(255, 255, 255, 0.82);
-    --blue-dim: rgba(255, 255, 255, 0.65);
-    --blue-subtle: rgba(255, 255, 255, 0.07);
-    --bg: #142F82;
-    --bg-off: #1c1d2e;
-    --border: rgba(255, 255, 255, 0.12);
-  }
+    /* Dark mode — bg becomes blue, text becomes white */
+    [data-theme="dark"] {
+        --blue: #ffffff;
+        --blue-mid: rgba(255, 255, 255, 0.82);
+        --blue-dim: rgba(255, 255, 255, 0.65);
+        --blue-subtle: rgba(255, 255, 255, 0.07);
+        --accent-orange: #ffb74d;
+        --accent-teal: #4db6ac;
+        --bg: #142f82;
+        --bg-off: #1c1d2e;
+        --border: rgba(255, 255, 255, 0.12);
+    }
 
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
 
-  html {
-    font-size: 18px;
-    -webkit-font-smoothing: antialiased;
-  }
+    html {
+        font-size: 18px;
+        -webkit-font-smoothing: antialiased;
+    }
 
-  body {
-    background: var(--bg);
-    color: var(--blue);
-    font-family: var(--font-mono);
-    min-height: 100vh;
-  }
+    body {
+        background: var(--bg);
+        color: var(--blue);
+        font-family: var(--font-sans);
+        min-height: 100vh;
+    }
 
-  a {
-    color: inherit;
-    text-decoration: none;
-  }
+    ::selection {
+        background: var(--blue-mid);
+        color: var(--bg);
+    }
 
-  ::selection {
-    background: var(--blue);
-    color: #fff;
-  }
+    a {
+        color: inherit;
+        text-decoration: none;
+    }
 </style>
