@@ -1,290 +1,267 @@
 ---
 title: "Hexagonal Architecture in a Go Monorepo"
-description: "A practical walkthrough of ports & adapters in Go.
-From project layout to dependency injection."
+description: "A practical walkthrough of ports & adapters in Go."
 date: "2026-05-06"
 tag: "Architecture"
 ---
+For someone coming from TypeScript environment, it can be hard to understand why Go repo's have this strange folder structure. It can be intimidating to understand **domains**, **ports**, **services**, **repository** and **handlers** 
 
-Most Go projects I've seen start clean and get messy fast. A handler that started as 15 lines quietly absorbs database calls, business rules, and HTTP concerns until you can't test any of it without spinning up Postgres.
+The main motivation behind Hexagonal architecture is to protect business logic from infrastructure details. Along with this, testability comes as an add-on. Without spinning up a real DB instance we can test out every service.
 
-Hexagonal Architecture (a.k.a. Ports & Adapters) is a way out. This is how I structure Go services that stay testable as they grow.
-
-## The core idea
-
-Your **domain** — business logic, entities, rules — lives at the centre. It knows nothing about HTTP, databases, or message queues. Those are **adapters** that plug into **ports** (interfaces the domain defines).
-
-<Callout type="idea">
-  Think of ports as electrical sockets: your domain defines the socket shape, adapters are the plugs. You can swap plugs (swap PostgreSQL for SQLite in tests) without rewiring the house.
-</Callout>
-
-## Project layout
-
-<FileTree entries={[
-  { name: "cmd/api/main.go", note: "wires everything together" },
-  { name: "internal/domain/", note: "pure business logic — no imports from infra" },
-  { name: "internal/domain/workflow.go", note: "entities + domain services" },
-  { name: "internal/ports/", note: "interfaces (the sockets)" },
-  { name: "internal/ports/repository.go", note: "what the domain needs from storage" },
-  { name: "internal/ports/notifier.go", note: "what the domain needs to send events" },
-  { name: "internal/adapters/postgres/", note: "implements ports.Repository" },
-  { name: "internal/adapters/nats/", note: "implements ports.Notifier" },
-  { name: "internal/app/", note: "application services — orchestrates domain + ports" },
-]} />
-
-## Defining a port
-
-A port is just a Go interface. It lives in the domain layer and describes what the domain *needs* — not what infrastructure *provides*.
-
-```go
-// internal/ports/repository.go
-package ports
-
-import (
-    "context"
-    "github.com/you/iris/internal/domain"
-)
-
-type WorkflowRepository interface {
-    Save(ctx context.Context, w domain.Workflow) error
-    FindByID(ctx context.Context, id string) (domain.Workflow, error)
-    ListPending(ctx context.Context) ([]domain.Workflow, error)
-}
+## Repo structure
+```
+app/
+├── cmd/
+│   └── api/
+│       └── main.go          ← wiring only, no logic
+├── internal/
+│   ├── domain/
+│   │   ├── user.go          ← entities, value objects
+│   │   ├── order.go
+│   │   └── ports.go         ← interfaces (UserRepository, Mailer...)
+│   ├── service/
+│   │   ├── user_service.go  ← business orchestration
+│   │   └── order_service.go
+│   ├── repository/
+│   │   ├── postgres_user.go ← implements domain.UserRepository
+│   │
+│   ├── handler/
+│   │   └── user_handler.go  ← HTTP, gRPC adapters
+│
+├── pkg/                     ← shared utils (if any), safe to import externally
+└── go.mod
 ```
 
-Notice: no `*sql.DB`, no `pgx`, no nothing. The domain doesn't care how data is stored.
 
-## The domain entity
+## Domain
+
+Domains are just entities and their logic defined with 0 dependencies and imports.
+If you find http/net or db imported in a domain file, just know it's a leak.
+A domain contains everything from a value object to structs and even domain errors.
+
+A simple example could be:
 
 ```go
-// internal/domain/workflow.go
+import (
+	"errors"
+	"time"
+)
+
+// Entity which has an ID and lives in DB
+type User struct{
+	ID int64
+	Email string
+	Name string
+	CreatedAt time.Time
+}
+
+type Money struct{
+	Amount int64
+	Currency string
+}
+// Value object
+func (m Money) Add(other Money) (Money,error){
+	if m.Currency!=other.Currency{
+		return Money{},errors.New("currency mismatch")
+	}
+	return Money{Amount:m.Amount + other.Amount, Currency: m.Currency}, nil
+}
+// Domain errors
+var (
+	ErrUserNotFound = errors.New("user not found")
+	ErrEmailTaken = errors.New("email already taken")
+)
+```
+<Callout type="idea">
+    Entitites have an identity while Value objects have no identity.
+    Entities have their own DB row and are compared by ID while Value objects are usually stored as columns and are compared by value.
+</Callout>
+
+## Ports
+
+Ports are interfaces **defined** in the **domain/service layer** but **implemented** in the **infrastructure layer**.
+These interfaces describe what the **service** needs from the outside world.
+
+Ports make the whole architecture swappable and testable.
+
+Here's a simple file demonstrating a port
+
+```go
 package domain
 
-import (
-    "errors"
-    "time"
-)
-
-type Status string
-
-const (
-    StatusPending  Status = "pending"
-    StatusRunning  Status = "running"
-    StatusDone     Status = "done"
-    StatusFailed   Status = "failed"
-)
-
-type Workflow struct {
-    ID        string
-    Name      string
-    Status    Status
-    CreatedAt time.Time
-    UpdatedAt time.Time
-}
-
-// domain logic lives here, not in handlers
-func (w *Workflow) Start() error {
-    if w.Status != StatusPending {
-        return errors.New("workflow must be pending to start")
-    }
-    w.Status = StatusRunning
-    w.UpdatedAt = time.Now()
-    return nil
-}
-
-func (w *Workflow) Complete() error {
-    if w.Status != StatusRunning {
-        return errors.New("workflow must be running to complete")
-    }
-    w.Status = StatusDone
-    w.UpdatedAt = time.Now()
-    return nil
+type UserRepository interface {
+	GetByID(id int64) (*User,error)
+	GetByEmail(email string) (*User,error)
+	Create(user *User) error
+	Update(user *User) error
 }
 ```
 
-<Callout type="warning">
-  Keep your domain package import-free from infrastructure. If you see `database/sql` or `net/http` in `internal/domain/`, something has leaked.
+## Service
+
+This is the business logic layer. It orchestrates the domain rules by calling ports (interfaces).
+Service layer never touches the SQL directly and it never parses HTTP.
+
+An example:
+
+```go
+type UserService struct{
+	repo domain.UserRepository //interface
+}
+
+func (s *UserService) Register(email, name string) (*domain.User,error){
+	existing,_:=s.repo.GetByEmail(email)
+	if existing!=nil{
+		return nil,domain.ErrEmailTaken
+	}
+	user:=&domain.User{Email:email, Name: name}
+	s.repo.Create(user)
+	return user, nil
+}
+```
+Service layer knows about the domain structs as well as ports (interfaces)
+
+## Repository
+This has the implementation of a port that talks to the database. It satisfies the UserRepository interface defined in the domain.
+So, the service can call it without ever knowing it is Postgres or any other DB.
+All SQL lives here and nowhere else.
+
+An example:
+```go
+type PostgresUserRepo struct{
+	db *sql.DB
+}
+
+// Compile time interface satisfaction check to make sure we've implemented all the methods
+var _ domain.UserRepository = (*PostgresUserRepo)(nil)
+
+func (r *PostgresUserRepo) GetByID (id int64) (*domain.User,error){
+	u:=&domain.User{}
+	err:=r.db.QueryRow(
+		"SELECT id, email FROM users WHERE id=$1", id
+	).Scan(&u.ID, &u.Email)
+	if err==sql.ErrNoRows{
+		return nil, domain.ErrUserNotFound
+	}
+	return u,err
+}
+```
+Repository layer knows about the domain structs and database/sql
+
+## Handler
+This is the outermost layer. It is a HTTP adapter that parses incoming requests, calls the service with clean data and writes the response.
+It knows nothing about the database.
+
+An example:
+
+```go
+type UserHandler struct {svc *service.UserService}
+
+func (h * UserHandler) Register (w http.ResponseWriter, r *http.Request){
+	var req struct{
+		Email string `json:"email"`
+		Name string `json:"name"`
+	}
+
+	json.NewDecoder(r.Body).Decode(&req)
+	user,err:=h.svc.Register(req.Email, req.Name)
+	if err!=nil{
+		http.Error(w,err.Error(), 400)
+		return
+	}
+	json.NewEncoder(w).Encode(user)
+}
+```
+<Callout>
+    Handlers only know about the service layer and they import the net/http package
 </Callout>
 
-## An application service
+## Lifecycle of a HTTP request
 
-The application layer orchestrates — it calls domain logic and uses ports to persist or notify.
+```
+Client -> Handler -> Service -> Repository -> Handler
+```
+Let's trace a `POST /users/register` request:
+1. Request hits the middleware.
+2. Handler decodes the raw JSON body into a Go struct and does input validation. It then calls `svc.Register(email,name)` and knows nothing beyond it.
+3. The service checks whether the email is already in use and builds the `domain.User` struct. It then calls the repo to persist it.
+4. The repo receives the domain struct, runs SQL and scans the result back into the struct. If the DB returns an error the repo translates it into a domain error before passing it up.
+5. The return value goes back up through service -> handler. The handler encodes the user as JSON and writes a `201 Created` response.
 
-```go
-// internal/app/workflow_service.go
-package app
+<Callout>
+    Every layer returns the same `*domain.User`.
+</Callout>
 
-import (
-    "context"
-    "fmt"
+## How all these layers wire together
 
-    "github.com/you/iris/internal/domain"
-    "github.com/you/iris/internal/ports"
-)
-
-type WorkflowService struct {
-    repo     ports.WorkflowRepository
-    notifier ports.Notifier
-}
-
-func NewWorkflowService(
-    repo ports.WorkflowRepository,
-    notifier ports.Notifier,
-) *WorkflowService {
-    return &WorkflowService{repo: repo, notifier: notifier}
-}
-
-func (s *WorkflowService) StartWorkflow(ctx context.Context, id string) error {
-    w, err := s.repo.FindByID(ctx, id)
-    if err != nil {
-        return fmt.Errorf("find workflow: %w", err)
-    }
-
-    if err := w.Start(); err != nil {
-        return fmt.Errorf("start workflow: %w", err)      // domain rule enforced here
-    }
-
-    if err := s.repo.Save(ctx, w); err != nil {
-        return fmt.Errorf("save workflow: %w", err)
-    }
-
-    s.notifier.Publish(ctx, "workflow.started", w.ID)
-    return nil
-}
+```
+Client -> Middleware -> Handler -> Service -> Repository -> Handler -> Client
 ```
 
-## The Postgres adapter
+Each layer only knows about the layer to its left.
 
-The adapter implements the port interface. This is the only place Postgres knowledge lives.
+- The repository will never import the handler.
+- The service will never import the repo directly. It only imports the interface(port)
+- The domain imports nothing from the codebase at all.
 
-```go
-// internal/adapters/postgres/workflow_repo.go
-package postgres
-
-import (
-    "context"
-    "fmt"
-
-    "github.com/jackc/pgx/v5/pgxpool"
-    "github.com/you/iris/internal/domain"
-)
-
-type WorkflowRepo struct {
-    db *pgxpool.Pool
-}
-
-func NewWorkflowRepo(db *pgxpool.Pool) *WorkflowRepo {
-    return &WorkflowRepo{db: db}
-}
-
-func (r *WorkflowRepo) FindByID(ctx context.Context, id string) (domain.Workflow, error) {
-    var w domain.Workflow
-    err := r.db.QueryRow(ctx,
-        `SELECT id, name, status, created_at, updated_at
-         FROM workflows WHERE id = $1`, id,
-    ).Scan(&w.ID, &w.Name, &w.Status, &w.CreatedAt, &w.UpdatedAt)
-    if err != nil {
-        return w, fmt.Errorf("query workflow: %w", err)
-    }
-    return w, nil
-}
-
-// Save, ListPending ...
-```
-
-## Wiring it up in main
+## Main.go
 
 ```go
-// cmd/api/main.go
 package main
 
 import (
-    "log"
-    "os"
+    "database/sql"
+    "net/http"
 
-    "github.com/jackc/pgx/v5/pgxpool"
-    "github.com/you/iris/internal/adapters/nats"
-    "github.com/you/iris/internal/adapters/postgres"
-    "github.com/you/iris/internal/app"
+    "github.com/go-chi/chi/v5"
+    _ "github.com/lib/pq"
+
+    "app/internal/config"
+    "app/internal/handler"
+    "app/internal/middleware"
+    "app/internal/repository"
+    "app/internal/service"
 )
 
 func main() {
-    db, err := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
+    // Load all config from environment variables
+    cfg := config.Load()
+
+    // Create the raw infrastructure clients
+    db, err := sql.Open("postgres", cfg.DBURL)
     if err != nil {
-        log.Fatal(err)
+        panic(err)
     }
 
-    repo     := postgres.NewWorkflowRepo(db)
-    notifier := nats.NewNotifier(os.Getenv("NATS_URL"))
-    svc      := app.NewWorkflowService(repo, notifier)
+    // Wrap infra clients in structs that satisfy the domain ports
+    // userRepo satisfies domain.UserRepository  (checked at compile time)
+    userRepo := repository.NewPostgresUserRepo(db)
 
-    // pass svc into HTTP handlers, gRPC servers, etc.
-    startHTTPServer(svc)
+		// DEPENDENCY INJECTION 
+    // Inject the ports into the service
+    userSvc := service.NewUserService(userRepo)
+
+    // Inject the service into the handler
+    userH := handler.NewUserHandler(userSvc)
+
+    // Register routes and start the server
+    r := chi.NewRouter()
+    r.Use(middleware.RequestID)
+    r.Use(middleware.Logger)
+    r.Use(middleware.Auth(cfg.JWTSecret))
+
+    r.Post("/users/register", userH.Register)
+    r.Get("/users/{id}", userH.GetByID)
+
+    http.ListenAndServe(cfg.Port, r)
 }
 ```
 
-`main.go` is the only place that knows about Postgres, NATS, and HTTP simultaneously. Everything else is cleanly separated.
+## When should you use this
+It makes sense to use Hexagonal architecture when you have a team, when you want to test the business logic without infrastructure, etc.
+Initially this could slow you down but for a large project it will eventually speed you up
+It is an overkill for a simple CRUD app since its pretty boilerplate heavy.
 
-## Testing without infrastructure
-
-The real payoff: you can test `WorkflowService` with a fake repository — no Docker, no Postgres.
-
-```go
-// internal/app/workflow_service_test.go
-package app_test
-
-import (
-    "context"
-    "testing"
-
-    "github.com/you/iris/internal/app"
-    "github.com/you/iris/internal/domain"
-)
-
-// in-memory fake — implements ports.WorkflowRepository
-type fakeRepo struct {
-    store map[string]domain.Workflow
-}
-
-func (f *fakeRepo) FindByID(_ context.Context, id string) (domain.Workflow, error) {
-    return f.store[id], nil
-}
-func (f *fakeRepo) Save(_ context.Context, w domain.Workflow) error {
-    f.store[w.ID] = w
-    return nil
-}
-func (f *fakeRepo) ListPending(_ context.Context) ([]domain.Workflow, error) {
-    return nil, nil
-}
-
-func TestStartWorkflow(t *testing.T) {
-    repo := &fakeRepo{store: map[string]domain.Workflow{
-        "wf-1": {ID: "wf-1", Status: domain.StatusPending},
-    }}
-    svc := app.NewWorkflowService(repo, &fakeNotifier{})
-
-    if err := svc.StartWorkflow(context.Background(), "wf-1"); err != nil {
-        t.Fatal(err)
-    }
-
-    if repo.store["wf-1"].Status != domain.StatusRunning {
-        t.Error("expected workflow to be running")
-    }
-}
-```
-
-<Callout type="idea">
-  Fast unit tests with zero infrastructure = tests you'll actually run. This is the main practical win of hexagonal architecture.
-</Callout>
-
-## When not to use it
-
-Hexagonal architecture adds indirection. For a 200-line script or a simple CRUD API, it's overkill. Reach for it when:
-
-- You have real business rules that need to be tested in isolation
-- You expect to swap infrastructure (e.g. SQLite in dev, Postgres in prod)
-- Multiple teams touch the same codebase and need clear boundaries
-
----
-
-The full source for Hermes, my workflow automation platform is structured this way. It's made adding new triggers, adapters, and executors significantly easier than if I'd put everything in handlers from the start.
+Here are some repos to further explore the Hexagonal architecture:
+- [Hermes](https://github.com/eulerbutcooler/hermes)
+- [Go-API-Boilerplate](https://github.com/vardius/go-api-boilerplate)
