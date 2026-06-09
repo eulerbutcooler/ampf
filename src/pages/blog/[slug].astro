@@ -32,6 +32,7 @@ const dateLabel = fmt.format(new Date(post.data.date));
 <Layout
     title={`${post.data.title} — eulerbutcooler`}
     description={post.data.description}
+    ogImage={new URL(`/open-graph/${post.id}.png`, Astro.url.origin).toString()}
 >
     <div id="site-wrap">
         <NavBar />
