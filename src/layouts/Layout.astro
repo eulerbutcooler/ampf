@@ -38,7 +38,6 @@ const {
             href="https://fonts.googleapis.com/css2?family=Doto:ROND,wght@0,100..900;1,100..900&family=Share+Tech+Mono&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
             rel="stylesheet"
         />
-        <!-- Prevent flash of wrong theme: read localStorage before first paint -->
         <script is:inline>
             (function () {
                 const saved = localStorage.getItem("theme");
@@ -75,7 +74,6 @@ const {
         --max-w: 860px;
     }
 
-    /* Dark mode — bg becomes blue, text becomes white */
     [data-theme="dark"] {
         --blue: #ffffff;
         --blue-mid: rgba(255, 255, 255, 0.82);

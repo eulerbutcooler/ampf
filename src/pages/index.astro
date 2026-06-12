@@ -11,7 +11,7 @@ import Footer from "../components/Footer.astro";
 <Layout
     title="eulerbutcooler"
     description="Full-stack developer building fast, reliable systems at the edge of the web."
-    ogImage={new URL("/open-graph/index.png", Astro.site).toString()}
+    ogImage={new URL("../public/og-preview.png", Astro.site).toString()}
 >
     <div id="site-wrap">
         <NavBar />
@@ -30,7 +30,6 @@ import Footer from "../components/Footer.astro";
         margin: 0 auto;
     }
 
-    /* Navbar, Hero, etc. all use max-w internally, site-wrap just adds side padding */
     #site-wrap > :global(*) {
         padding-left: 0;
         padding-right: 0;

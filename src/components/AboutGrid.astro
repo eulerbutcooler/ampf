@@ -1,90 +1,95 @@
 ---
 const skills = [
-  { group: "Languages", items: "TypeScript · Go · Python · SQL" },
-  { group: "Frontend", items: "Astro · React · Next.js" },
-  { group: "Backend", items: "Go · Node.js · PostgreSQL · Redis" },
-  { group: "Infra", items: "Cloudflare · Docker · Linux · Nginx · Kubernetes" },
+    { group: "Languages", items: "TypeScript · Go · Python · SQL" },
+    { group: "Frontend", items: "Astro · React · Next.js" },
+    { group: "Backend", items: "Go · Node.js · PostgreSQL · Redis" },
+    {
+        group: "Infra",
+        items: "Cloudflare · Docker · Linux · Nginx · Kubernetes",
+    },
 ];
 ---
 
 <section id="about">
-  <div id="about-inner">
-    <span class="section-label">[Stack]</span>
+    <div id="about-inner">
+        <span class="section-label">[Stack]</span>
 
-    <div id="skills-grid">
-      {skills.map((s) => (
-        <div class="skill-row">
-          <span class="skill-group">{s.group}</span>
-          <span class="skill-items">{s.items}</span>
+        <div id="skills-grid">
+            {
+                skills.map((s) => (
+                    <div class="skill-row">
+                        <span class="skill-group">{s.group}</span>
+                        <span class="skill-items">{s.items}</span>
+                    </div>
+                ))
+            }
         </div>
-      ))}
     </div>
-  </div>
 </section>
 
 <style>
-  #about {
-    border-bottom: 1px solid var(--border);
-  }
+    #about {
+        border-bottom: 1px solid var(--border);
+    }
 
-  #about-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 28px 0;
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    gap: 0 24px;
-    align-items: start;
-  }
-
-  .section-label {
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--blue-dim);
-    padding-top: 6px;
-  }
-
-  #skills-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .skill-row {
-    display: grid;
-    grid-template-columns: 120px 1fr;
-    gap: 0 16px;
-    padding: 6px 0;
-    align-items: baseline;
-  }
-
-  .skill-row:last-child {
-    border-bottom: none;
-  }
-
-  .skill-group {
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--blue-dim);
-  }
-
-  .skill-items {
-    font-size: 13px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--blue);
-  }
-
-  @media (max-width: 640px) {
     #about-inner {
-      grid-template-columns: 1fr;
-      gap: 16px;
+        max-width: var(--max-w);
+        margin: 0 auto;
+        padding: 28px 0;
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: 0 24px;
+        align-items: start;
+    }
+
+    .section-label {
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        padding-top: 6px;
+    }
+
+    #skills-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
     }
 
     .skill-row {
-      grid-template-columns: 100px 1fr;
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 0 16px;
+        padding: 6px 0;
+        align-items: baseline;
     }
-  }
+
+    .skill-row:last-child {
+        border-bottom: none;
+    }
+
+    .skill-group {
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+    }
+
+    .skill-items {
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--blue);
+    }
+
+    @media (max-width: 640px) {
+        #about-inner {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .skill-row {
+            grid-template-columns: 100px 1fr;
+        }
+    }
 </style>

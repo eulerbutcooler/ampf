@@ -4,7 +4,6 @@ import Layout from "../layouts/Layout.astro";
 import NavBar from "../components/NavBar.astro";
 import Footer from "../components/Footer.astro";
 
-// Fetch all non-draft posts, sorted newest first
 const allPosts = await getCollection("blog", ({ data }) => data.draft !== true);
 const posts = allPosts.sort(
     (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime(),
@@ -20,7 +19,6 @@ const tags = ["All", ...Array.from(new Set(posts.map((p) => p.data.tag)))];
     <div id="site-wrap">
         <NavBar />
 
-        <!-- Page header -->
         <section id="blogs-hero">
             <div id="blogs-hero-inner">
                 <div id="blogs-hero-top">
@@ -34,7 +32,6 @@ const tags = ["All", ...Array.from(new Set(posts.map((p) => p.data.tag)))];
             </div>
         </section>
 
-        <!-- Filter bar -->
         <section id="filter-bar">
             <div id="filter-inner">
                 <span class="section-label">[Filter]</span>
@@ -53,7 +50,6 @@ const tags = ["All", ...Array.from(new Set(posts.map((p) => p.data.tag)))];
             </div>
         </section>
 
-        <!-- Posts list -->
         <section id="posts-section">
             <div id="posts-inner">
                 <span class="section-label">[{posts.length} posts]</span>

@@ -1,5 +1,4 @@
 ---
-// RecentBlogs — latest 3 posts from content collection
 import { getCollection } from "astro:content";
 
 const allPosts = await getCollection("blog", ({ data }) => data.draft !== true);
