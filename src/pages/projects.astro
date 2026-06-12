@@ -193,13 +193,16 @@ const tags = ["All", ...Array.from(new Set(projects.map((p) => p.tag)))];
   #projects-list {
     display: flex;
     flex-direction: column;
-    border-top: 1px solid var(--border);
   }
 
   /* The ProjectCard component handles its own border-bottom,
      hide the last one via the wrapper */
   .project-wrap:last-child > :global(.project-row) {
     border-bottom: none;
+  }
+
+  .project-wrap:first-child > :global(.project-row) {
+    border-top: 1px solid var(--border);
   }
 
   @media (max-width: 640px) {

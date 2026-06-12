@@ -58,7 +58,6 @@ const posts = allPosts
   #blogs-list {
     display: flex;
     flex-direction: column;
-    border-top: 1px solid var(--border);
   }
 
   .blog-row {
@@ -76,6 +75,10 @@ const posts = allPosts
 
   .blog-row:last-child {
     border-bottom: none;
+  }
+
+  .blog-row:first-child {
+    border-top: 1px solid var(--border);
   }
 
   .blog-row:hover {

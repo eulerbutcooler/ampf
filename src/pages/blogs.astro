@@ -233,7 +233,6 @@ const tags = ["All", ...Array.from(new Set(posts.map((p) => p.data.tag)))];
     #posts-list {
         display: flex;
         flex-direction: column;
-        border-top: 1px solid var(--border);
     }
 
     .post-row {
@@ -252,6 +251,10 @@ const tags = ["All", ...Array.from(new Set(posts.map((p) => p.data.tag)))];
 
     .post-row:last-child {
         border-bottom: none;
+    }
+
+    .post-row:first-child {
+        border-top: 1px solid var(--border);
     }
     .post-row:hover {
         background: var(--blue-subtle);
