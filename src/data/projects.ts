@@ -38,7 +38,7 @@ export const projects: Project[] = [
       "A travel roulette that brings up interesting places to visit wherever you click on the globe",
     stack: ["NextJS", "ThreeJS", "Gemini API"],
     github: "https://github.com/eulerbutcooler/wikisillygoose",
-    live: "https://wikisillygoose.eulerbutcooler.tech/",
+    live: "https://wikisillygoose.eulerbutcooler.xyz/",
     year: "2025",
     tag: "Fullstack",
     featured: true,
