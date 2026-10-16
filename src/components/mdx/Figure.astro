@@ -3,10 +3,10 @@
 //
 //   <Figure src="/figures/surang-client-server.svg" alt="…" caption="…" />
 //
-// Inline: hovering zooms in place and follows the pointer (a vanilla port of
-// the Animate UI "Image Zoom" effect - spring feel, no React/Motion
-// dependency); clicking opens the full-screen lightbox. Vector sources stay
-// crisp at any size.
+// Inline: the image stays still (no hover zoom); a click or the Zoom button
+// opens the full-screen lightbox, where the image can be dragged to pan,
+// pinch- or wheel-zoomed toward the pointer, and double-clicked to toggle
+// magnification. Vector sources stay crisp at any size.
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -21,7 +21,7 @@ interface Props {
 const { src, alt, caption, maxWidth } = Astro.props;
 
 // Read the intrinsic size from the SVG's viewBox so the inline image reserves
-// the right space (no layout shift) and the dialog knows its natural width.
+// the right space (no layout shift).
 let naturalW: number | null = null;
 let naturalH: number | null = null;
 try {
@@ -61,19 +61,20 @@ try {
 
 <dialog class="fig-dialog" data-dialog aria-label={alt}>
     <div class="fig-dialog-bar">
-        <span class="fig-dialog-hint">Click image to toggle size · Esc to close</span>
+        <span class="fig-dialog-hint">Drag to pan · pinch or scroll to zoom · Esc to close</span>
         <button class="fig-close" type="button" data-close aria-label="Close">
             <span aria-hidden="true">✕</span>
         </button>
     </div>
-    <div class="fig-dialog-body">
+    <div class="fig-stage">
         <img
             src={src}
             alt={alt}
             width={naturalW ?? undefined}
             height={naturalH ?? undefined}
-            style={naturalW ? `--fig-natural: ${naturalW}px` : undefined}
-            data-full
+            loading="lazy"
+            decoding="async"
+            draggable="false"
         />
     </div>
 </dialog>
@@ -97,13 +98,9 @@ try {
         height: auto;
     }
 
-    /* Hover zoom (Animate UI "Image Zoom" port): the transform itself is set
-       from JS; a short transition gives the spring-like trailing feel. */
+    /* The lightbox is the zoom affordance on fine pointers */
     @media (hover: hover) and (pointer: fine) {
         .fig-frame img {
-            transform-origin: 0 0;
-            transition: transform 140ms var(--ease-out);
-            will-change: transform;
             cursor: zoom-in;
         }
     }
@@ -162,12 +159,14 @@ try {
         margin: auto;
         width: fit-content;
         height: fit-content;
-        max-width: 95vw;
-        max-height: 92vh;
+        max-width: 96vw;
+        max-height: 94vh;
         padding: 0;
         border: 1px dotted var(--rule);
         background: #0a0b0e;
         color: var(--blue);
+        /* taps on the close button register without the double-tap delay */
+        touch-action: manipulation;
         opacity: 0;
         transform: scale(0.97);
         transition:
@@ -228,6 +227,7 @@ try {
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        flex: none;
         width: 26px;
         height: 26px;
         background: none;
@@ -250,27 +250,30 @@ try {
         transform: scale(0.94);
     }
 
-    .fig-dialog-body {
-        overflow: auto;
-        overscroll-behavior: contain;
-        max-height: calc(92vh - 44px);
+    /* A viewport onto the image: pan and pinch happen here, so the browser's
+       own touch gestures must be suppressed inside it. */
+    .fig-stage {
+        position: relative;
+        overflow: hidden;
+        width: calc(94vw - 2px);
+        height: calc(92vh - 46px - 2px);
+        touch-action: none;
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
     }
 
-    .fig-dialog-body img {
+    .fig-stage.is-grabbing {
+        cursor: grabbing;
+    }
+
+    .fig-stage img {
+        position: absolute;
+        left: 0;
+        top: 0;
         display: block;
-        margin: auto;
-        max-width: 92vw;
-        max-height: calc(92vh - 68px);
-        width: auto;
-        height: auto;
-        cursor: zoom-in;
-    }
-
-    .fig-dialog-body img.is-zoomed {
-        max-width: none;
-        max-height: none;
-        width: var(--fig-natural, auto);
-        cursor: zoom-out;
+        transform-origin: 0 0;
+        -webkit-user-drag: none;
     }
 
     /* Keep the page still while the lightbox is open */
@@ -280,8 +283,7 @@ try {
 
     @media (prefers-reduced-motion: reduce) {
         .fig-zoom,
-        .fig-close,
-        .fig-frame img {
+        .fig-close {
             transition: none;
         }
 
@@ -293,58 +295,177 @@ try {
 </style>
 
 <script>
-    // One delegated set of handlers serves every figure on the page.
-    const fine = matchMedia("(hover: hover) and (pointer: fine)");
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)");
-    const HOVER_ZOOM = 2.6;
+    // One delegated opener/closer serves every figure on the page; each
+    // lightbox gets its own pan/pinch controller the first time it opens.
+    const MIN_SCALE = 1;
+    const MAX_SCALE = 6;
 
-    // ---- hover zoom: scale up and follow the pointer (Animate UI port)
-    let pending: PointerEvent | null = null;
-    let raf = 0;
+    const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-    function applyHoverZoom(event: PointerEvent) {
-        const frame = (event.target as HTMLElement | null)?.closest?.(
-            ".fig-frame",
-        ) as HTMLElement | null;
-        if (!frame) return;
-        const img = frame.querySelector("img");
-        if (!img) return;
+    const controllers = new WeakMap<HTMLDialogElement, () => void>();
 
-        const r = frame.getBoundingClientRect();
-        const x = Math.min(1, Math.max(0, (event.clientX - r.left) / r.width));
-        const y = Math.min(1, Math.max(0, (event.clientY - r.top) / r.height));
-        img.style.transform = `translate(${-(HOVER_ZOOM - 1) * x * r.width}px, ${-(HOVER_ZOOM - 1) * y * r.height}px) scale(${HOVER_ZOOM})`;
+    function setup(dialog: HTMLDialogElement) {
+        if (controllers.has(dialog)) return;
+        const stage = dialog.querySelector<HTMLElement>(".fig-stage");
+        const img = stage?.querySelector<HTMLElement>("img");
+        if (!stage || !img) return;
+
+        let scale = 1;
+        let tx = 0;
+        let ty = 0;
+        let baseW = 0;
+        let baseH = 0;
+        const pointers = new Map<number, { x: number; y: number }>();
+        let pinch: { d0: number; s0: number; tx0: number; ty0: number; mx0: number; my0: number } | null =
+            null;
+
+        const apply = () => {
+            img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+        };
+
+        // The translation includes the centring offset, so the image spans
+        // [tx, tx + baseW*scale] in stage coordinates.
+        const clampT = () => {
+            const overX = baseW * scale - stage.clientWidth;
+            const overY = baseH * scale - stage.clientHeight;
+            tx = overX > 0
+                ? clamp(tx, stage.clientWidth - baseW * scale, 0)
+                : (stage.clientWidth - baseW * scale) / 2;
+            ty = overY > 0
+                ? clamp(ty, stage.clientHeight - baseH * scale, 0)
+                : (stage.clientHeight - baseH * scale) / 2;
+        };
+
+        // Contain the image in the stage at scale 1 and centre it.
+        const fit = () => {
+            const w = stage.clientWidth;
+            const h = stage.clientHeight;
+            if (!w || !h) return false;
+            const nw = img.naturalWidth || Number(img.getAttribute("width")) || 0;
+            const nh = img.naturalHeight || Number(img.getAttribute("height")) || 0;
+            if (nw && nh) {
+                const contain = Math.min(w / nw, h / nh);
+                baseW = nw * contain;
+                baseH = nh * contain;
+            } else {
+                baseW = w;
+                baseH = h;
+            }
+            img.style.width = `${baseW}px`;
+            img.style.height = `${baseH}px`;
+            scale = 1;
+            clampT();
+            pinch = null;
+            apply();
+            return true;
+        };
+
+        const stagePoint = (x: number, y: number) => {
+            const r = stage.getBoundingClientRect();
+            return { x: x - r.left, y: y - r.top };
+        };
+
+        // Scale about a fixed stage point (the cursor / pinch midpoint).
+        const zoomTo = (next: number, px: number, py: number) => {
+            const target = clamp(next, MIN_SCALE, MAX_SCALE);
+            const k = target / scale;
+            tx = px - (px - tx) * k;
+            ty = py - (py - ty) * k;
+            scale = target;
+            clampT();
+            apply();
+        };
+
+        stage.addEventListener("wheel", (event: WheelEvent) => {
+            event.preventDefault();
+            const p = stagePoint(event.clientX, event.clientY);
+            zoomTo(scale * Math.exp(-event.deltaY * 0.0015), p.x, p.y);
+        }, { passive: false });
+
+        stage.addEventListener("dblclick", (event) => {
+            const p = stagePoint(event.clientX, event.clientY);
+            zoomTo(scale > 1.05 ? MIN_SCALE : 2.5, p.x, p.y);
+        });
+
+        stage.addEventListener("pointerdown", (event: PointerEvent) => {
+            try {
+                stage.setPointerCapture(event.pointerId);
+            } catch {
+                /* synthetic events cannot be captured */
+            }
+            pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+            stage.classList.add("is-grabbing");
+            if (pointers.size === 2) {
+                const [a, b] = [...pointers.values()];
+                const mid = stagePoint((a.x + b.x) / 2, (a.y + b.y) / 2);
+                pinch = {
+                    d0: Math.hypot(b.x - a.x, b.y - a.y) || 1,
+                    s0: scale,
+                    tx0: tx,
+                    ty0: ty,
+                    mx0: mid.x,
+                    my0: mid.y,
+                };
+            }
+        });
+
+        stage.addEventListener("pointermove", (event: PointerEvent) => {
+            const prev = pointers.get(event.pointerId);
+            if (!prev) return;
+            const dx = event.clientX - prev.x;
+            const dy = event.clientY - prev.y;
+            prev.x = event.clientX;
+            prev.y = event.clientY;
+
+            if (pointers.size >= 2 && pinch) {
+                const [a, b] = [...pointers.values()];
+                const d = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+                const mid = stagePoint((a.x + b.x) / 2, (a.y + b.y) / 2);
+                const target = clamp(pinch.s0 * (d / pinch.d0), MIN_SCALE, MAX_SCALE);
+                const k = target / pinch.s0;
+                tx = mid.x - (pinch.mx0 - pinch.tx0) * k;
+                ty = mid.y - (pinch.my0 - pinch.ty0) * k;
+                scale = target;
+                clampT();
+                apply();
+                return;
+            }
+
+            tx += dx;
+            ty += dy;
+            clampT();
+            apply();
+        });
+
+        const release = (event: PointerEvent) => {
+            pointers.delete(event.pointerId);
+            if (pointers.size < 2) pinch = null;
+            if (pointers.size === 0) stage.classList.remove("is-grabbing");
+        };
+        stage.addEventListener("pointerup", release);
+        stage.addEventListener("pointercancel", release);
+
+        // Re-contain on viewport changes and reset the view when closed.
+        new ResizeObserver(() => {
+            if (dialog.open) fit();
+        }).observe(stage);
+        dialog.addEventListener("close", () => fit());
+
+        controllers.set(dialog, fit);
     }
 
-    document.addEventListener("pointermove", (event) => {
-        if (!fine.matches || reduce.matches) return;
-        if (!(event.target as HTMLElement | null)?.closest?.(".fig-frame")) return;
-        pending = event;
-        if (raf) return;
-        raf = requestAnimationFrame(() => {
-            raf = 0;
-            if (pending) applyHoverZoom(pending);
-        });
-    });
-
-    document.addEventListener("pointerout", (event) => {
-        const frame = (event.target as HTMLElement | null)?.closest?.(
-            ".fig-frame",
-        ) as HTMLElement | null;
-        if (!frame) return;
-        const to = event.relatedTarget as HTMLElement | null;
-        if (to && frame.contains(to)) return; // still inside the figure
-        const img = frame.querySelector("img");
-        if (img) img.style.transform = "";
-    });
-
-    // ---- clicks
     document.addEventListener("click", (event) => {
         const target = event.target as HTMLElement | null;
         if (!target) return;
 
-        const openDialog = (figure: Element | null) =>
-            (figure?.nextElementSibling as HTMLDialogElement | null)?.showModal();
+        const openDialog = (figure: Element | null) => {
+            const dlg = figure?.nextElementSibling as HTMLDialogElement | null;
+            if (!dlg) return;
+            setup(dlg);
+            const refit = controllers.get(dlg);
+            dlg.showModal();
+            requestAnimationFrame(() => refit?.());
+        };
 
         const zoomBtn = target.closest("[data-zoom]");
         if (zoomBtn) {
@@ -352,8 +473,7 @@ try {
             return;
         }
 
-        // Clicking the inline image opens the lightbox too (the only zoom
-        // affordance on touch, where hover doesn't exist)
+        // A click on the inline image is a second path into the lightbox
         const inlineImg = target.closest(".fig-frame img");
         if (inlineImg) {
             openDialog(inlineImg.closest("figure"));
@@ -371,20 +491,5 @@ try {
             target.close();
             return;
         }
-
-        // Click on the image inside the dialog toggles fit ↔ natural size
-        const img = target.closest<HTMLElement>("dialog [data-full]");
-        img?.classList.toggle("is-zoomed");
     });
-
-    // Reset the size toggle whenever a lightbox closes (the close event
-    // doesn't bubble, so listen in the capture phase).
-    document.addEventListener(
-        "close",
-        (event) => {
-            const dialog = event.target as HTMLElement | null;
-            dialog?.querySelector?.("[data-full]")?.classList.remove("is-zoomed");
-        },
-        true,
-    );
 </script>
