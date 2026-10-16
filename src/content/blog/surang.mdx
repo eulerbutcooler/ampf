@@ -192,8 +192,8 @@ Both maps are protected by a shared `RWMutex` (read-write mutex) and are updated
 I used Go's `httputil.ReverseProxy` with a custom `RoundTripper` called `tunnelTransport`
 The standard reverse proxy handles the HTTP request and response mechanics, while my custom transport changes how requests reach the backend. Instead of making a regular network request to the destination, tunnelTransport opens a Yamux stream to the appropriate client and sends a Dial frame identifying the target tunnel. \
 The selected tunnel binding is attached to the request context, allowing the transport to find the right Yamux session and tunnel label for each request. Once the stream is established, the HTTP request is forwarded through it, and the response is read back from the same stream. \
-This approach let me reuse Go's existing HTTP proxy implementation rather than building the entire proxy from scratch.
-**Why not implement the proxy myself?**
+This approach let me reuse Go's existing HTTP proxy implementation rather than building the entire proxy from scratch. \
+**Why not implement the proxy myself?** \
 I could've gone with it but I already built it in another project of mine - [HTTP server from scratch in Go](https://github.com/eulerbutcooler/http-server) so I skipped it in this one.
 
 ### Three-word Subdomains
