@@ -18,7 +18,8 @@ So here is everything I learnt and how I built my own reverse tunnel.
 
 ## Why does a reverse tunnel exist?
 
-Imagine you're developing a webapp for a client and want to show it to them, you have 2 options - **A. Deploy the site** \
+Imagine you're developing a webapp for a client and want to show it to them, you have 2 options - \
+**A. Deploy the site** \
 or \
 **B. Give them the code and ask them to run it on their machine**. \
 But why can't we just give them our public IP and the port the webapp is locally running on? \
@@ -194,7 +195,7 @@ The standard reverse proxy handles the HTTP request and response mechanics, whil
 The selected tunnel binding is attached to the request context, allowing the transport to find the right Yamux session and tunnel label for each request. Once the stream is established, the HTTP request is forwarded through it, and the response is read back from the same stream. \
 This approach let me reuse Go's existing HTTP proxy implementation rather than building the entire proxy from scratch. \
 **Why not implement the proxy myself?** \
-I could've gone with it but I already built it in another project of mine - [HTTP server from scratch in Go](https://github.com/eulerbutcooler/http-server) so I skipped it in this one.
+I could've implemented the HTTP proxying mechanics myself but I already kinda did it in another project of mine - [HTTP server from scratch in Go](https://github.com/eulerbutcooler/http-server) so I skipped it in this one.
 
 ### Three-word Subdomains
 Initially I was fine with subdomains containing numbers and letters but they didn't feel very human-readable. So I went with three-word subdomains. \
