@@ -42,7 +42,7 @@ const hasNow = Boolean(reading || listening);
                 </a>
                 and
                 <a
-                    class="social"
+                    class="social social--discord"
                     href="https://discord.com/users/eulerbutcooler"
                     target="_blank"
                     rel="noopener"
@@ -179,10 +179,15 @@ const hasNow = Boolean(reading || listening);
     .social {
         display: inline-flex;
         align-items: center;
-        vertical-align: middle;
+        /* sit on the text baseline like a tall glyph, not floating above it */
+        vertical-align: -0.125em;
         gap: 5px;
         color: inherit;
         transition: color 160ms var(--ease-out);
+    }
+
+    .social--discord {
+        margin-left: 0.2em;
     }
 
     .social:hover {
@@ -190,8 +195,8 @@ const hasNow = Boolean(reading || listening);
     }
 
     .social-icon {
-        width: 1.1em;
-        height: 1.1em;
+        width: 1.25em;
+        height: 1.25em;
         flex-shrink: 0;
     }
 

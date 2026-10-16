@@ -13,6 +13,17 @@
 export const projects: Project[] = [
   {
     index: "01",
+    title: "Surang",
+    description:
+      "A self-hostable reverse tunnel server made in Go",
+    stack: ["Go", "HTML", "Bubbletea", "Cloudflare"],
+    github: "https://github.com/eulerbutcooler/surang",
+    year: "2026",
+    tag: "Fullstack",
+    featured: true,
+  },
+  {
+    index: "02",
     title: "Hermes",
     description: "No-code automation platform built in Go with a DAG based UI",
     stack: ["TypeScript", "React", "Go", "Cloudflare"],
@@ -22,7 +33,7 @@ export const projects: Project[] = [
     featured: true,
   },
   {
-    index: "02",
+    index: "03",
     title: "AeroMentor",
     description: "RAG based fullstack app. Made for a client.",
     stack: ["Go", "PostgreSQL", "Redis", "RAG", "Python"],
@@ -32,7 +43,7 @@ export const projects: Project[] = [
     featured: true,
   },
   {
-    index: "03",
+    index: "04",
     title: "WikiSillyGoose",
     description:
       "A travel roulette that brings up interesting places to visit wherever you click on the globe",
@@ -41,10 +52,10 @@ export const projects: Project[] = [
     live: "https://wikisillygoose.eulerbutcooler.xyz/",
     year: "2025",
     tag: "Fullstack",
-    featured: true,
+    featured: false,
   },
   {
-    index: "04",
+    index: "05",
     title: "HTTP from Scratch",
     description:
       "Implemented a fully functional HTTP/1.1 server from raw TCP sockets",
