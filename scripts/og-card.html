@@ -1,0 +1,120 @@
+<!doctype html>
+<!--
+  OG card render harness for the home page card (public/og-preview.jpg).
+
+  Mirrors the hero plate (ascii cloud-sea + scrim + name + bio) at the standard
+  1200x630 OG size. To re-render:
+    1. copy this file to public/og-card.html
+    2. with the dev server running, screenshot it at 1200x630:
+       node -e "const {chromium}=require('playwright-core');(async()=>{const b=await chromium.launch({channel:'chrome'});const p=await (await b.newContext({viewport:{width:1200,height:630},reducedMotion:'reduce'})).newPage();await p.goto('http://localhost:4321/og-card.html',{waitUntil:'networkidle'});await p.evaluate(()=>document.fonts.ready);await p.waitForTimeout(1500);await p.screenshot({path:'public/og-preview.jpg',type:'jpeg',quality:92});await b.close();})()"
+    3. delete public/og-card.html and bump ?v= in src/pages/index.astro
+-->
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>OG card render</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Doto:ROND,wght@0,100..900;1,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            html,
+            body {
+                margin: 0;
+            }
+            body {
+                width: 1200px;
+                height: 630px;
+                overflow: hidden;
+                background: #08090c;
+            }
+            .plate {
+                position: relative;
+                overflow: hidden;
+                width: 1200px;
+                height: 630px;
+                background: #08090c;
+            }
+            .art {
+                position: absolute;
+                top: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 1260px;
+                pointer-events: none;
+                user-select: none;
+            }
+            .art ascii-art {
+                display: block;
+                width: 100%;
+            }
+            .art canvas {
+                display: block;
+                width: 100%;
+                height: auto;
+            }
+            .scrim {
+                position: absolute;
+                inset: 0;
+                pointer-events: none;
+                background:
+                    linear-gradient(
+                        to right,
+                        rgba(8, 9, 12, 0.9),
+                        rgba(8, 9, 12, 0.52) 44%,
+                        rgba(8, 9, 12, 0) 72%
+                    ),
+                    linear-gradient(
+                        to top,
+                        rgba(8, 9, 12, 0.42),
+                        rgba(8, 9, 12, 0) 46%
+                    );
+            }
+            .content {
+                position: relative;
+                height: 100%;
+                padding: 0 0 0 80px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            .name {
+                font-family: "Doto", monospace;
+                font-variation-settings: "ROND" 0;
+                font-size: 108px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                line-height: 0.98;
+                text-transform: uppercase;
+                color: #ffb74d;
+            }
+            .bio {
+                font-family: "IBM Plex Mono", monospace;
+                font-size: 26px;
+                line-height: 1.7;
+                letter-spacing: 0.02em;
+                color: rgba(255, 255, 255, 0.82);
+                text-transform: uppercase;
+                margin-top: 26px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="plate">
+            <div class="art">
+                <ascii-art
+                    piece="cloud-sea"
+                    label="The sun sinking into a drifting sea of orange cloud at dusk"
+                ></ascii-art>
+            </div>
+            <div class="scrim"></div>
+            <div class="content">
+                <div class="name">Amaan<br />Pathan.</div>
+                <div class="bio">Backend, DevOps, Frontend<br />in that order</div>
+            </div>
+        </div>
+        <script type="module" src="/ascii/ascii.js"></script>
+    </body>
+</html>
