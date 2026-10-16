@@ -103,7 +103,7 @@ const dateLabel = fmt.format(new Date(post.data.date));
             .then((res) => (res.ok ? res.json() : null))
             .then((data) => {
                 if (!data || typeof data.views !== "number" || data.views <= 0) return;
-                el.textContent = `${data.views.toLocaleString("en-US")} views`;
+                el.textContent = `${data.views.toLocaleString("en-US")} view${data.views === 1 ? "" : "s"}`;
                 el.hidden = false;
             })
             .catch(() => {});

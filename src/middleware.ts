@@ -183,7 +183,7 @@ async function views(url: URL) {
           account,
           tag,
           paths: [path, path.endsWith("/") ? path : `${path}/`],
-          since: new Date(Date.now() - 30 * 86400_000)
+          since: new Date(Date.now() - 6 * 86400_000)
             .toISOString()
             .slice(0, 10),
         },

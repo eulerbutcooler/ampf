@@ -11,6 +11,9 @@
 //
 // Cached at the edge for 15 minutes. The page hides its element on any error,
 // so an unconfigured deploy is fine.
+//
+// The count covers the last 6 days: Cloudflare's RUM adaptive groups reject
+// query ranges longer than a week (longer ranges silently return nothing).
 
 interface Env {
   CF_ANALYTICS_TOKEN?: string;
@@ -75,7 +78,7 @@ export const onRequestGet: PagesFunction<Env> = async ({
           account: env.CF_ACCOUNT_ID,
           tag: env.CF_WEB_ANALYTICS_TAG,
           paths: [path, path.endsWith("/") ? path : `${path}/`],
-          since: new Date(Date.now() - 30 * 86400_000).toISOString().slice(0, 10),
+          since: new Date(Date.now() - 6 * 86400_000).toISOString().slice(0, 10),
         },
       }),
     });
