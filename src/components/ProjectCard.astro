@@ -55,46 +55,49 @@ const { index, title, description, stack, github, live, year = "2024" } = Astro.
 <style>
   .project-row {
     display: grid;
-    grid-template-columns: 32px 1fr auto;
-    gap: 0 20px;
+    grid-template-columns: 28.8px 1fr auto;
+    gap: 0 18px;
     align-items: start;
-    padding: 18px 8px;
-    border-bottom: 1px solid var(--border);
+    padding: 18.9px 18px;
+    border-bottom: 1px dotted var(--rule);
     color: var(--blue);
-    min-height: 112px;
-    margin: 0 -8px;
-    transition: background 0.12s;
+    min-height: 117px;
+    transition: background-color 140ms var(--ease-out);
   }
 
   .project-row:hover {
     background: var(--blue-subtle);
   }
 
+  .project-row:active {
+    background: var(--border);
+  }
+
   .pr-index {
-    font-size: 12px;
+    font-size: 12.6px;
     letter-spacing: 0.1em;
     color: var(--blue-dim);
-    padding-top: 2px;
+    padding-top: 1.8px;
     font-variant-numeric: tabular-nums;
   }
 
   .pr-body {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5.4px;
   }
 
   .pr-header {
     display: flex;
     align-items: baseline;
-    gap: 16px;
+    gap: 14.4px;
     flex-wrap: wrap;
   }
 
   .pr-title {
     font-family: var(--font-doto);
     font-variation-settings: "ROND" 0;
-    font-size: 15px;
+    font-size: 14.4px;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -102,32 +105,32 @@ const { index, title, description, stack, github, live, year = "2024" } = Astro.
   }
 
   .pr-stack {
-    font-size: 11px;
+    font-size: 11.7px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--blue-dim);
   }
 
   .pr-desc {
-    font-size: 13px;
+    font-size: 13.5px;
     line-height: 1.6;
     letter-spacing: 0.02em;
     text-transform: uppercase;
     color: var(--blue-mid);
-    max-width: 560px;
+    max-width: 504px;
   }
 
   .pr-right {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 8px;
-    padding-top: 2px;
+    gap: 7.2px;
+    padding-top: 1.8px;
     flex-shrink: 0;
   }
 
   .pr-year {
-    font-size: 12px;
+    font-size: 12.6px;
     letter-spacing: 0.08em;
     color: var(--blue-dim);
     font-variant-numeric: tabular-nums;
@@ -137,24 +140,30 @@ const { index, title, description, stack, github, live, year = "2024" } = Astro.
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 12px;
-    margin-top: 6px;
+    gap: 10.8px;
+    margin-top: 5.4px;
   }
 
   .pr-icon-link {
     display: flex;
     align-items: center;
     color: var(--blue-dim);
-    transition: color 0.15s, transform 0.15s;
+    transition:
+      color 160ms var(--ease-out),
+      transform 160ms var(--ease-out);
   }
 
   .pr-icon-link svg {
-    width: 15px;
-    height: 15px;
+    width: 17.1px;
+    height: 17.1px;
   }
 
   .pr-icon-link:hover {
     color: var(--blue);
     transform: translateY(-1px);
+  }
+
+  .pr-icon-link:active {
+    transform: scale(0.9);
   }
 </style>

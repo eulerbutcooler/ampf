@@ -1,0 +1,116 @@
+---
+import Layout from "../layouts/Layout.astro";
+import NavBar from "../components/NavBar.astro";
+import Footer from "../components/Footer.astro";
+---
+
+<Layout
+    title="Sheet not found - eulerbutcooler"
+    description="This page doesn’t exist or was moved."
+>
+    <div id="site-wrap">
+        <NavBar />
+
+        <main id="main">
+            <section id="notfound">
+                <div id="notfound-inner">
+                    <span class="label">Error 404 -</span>
+                    <h1 id="notfound-title">NOT FOUND.</h1>
+                    <p id="notfound-sub">
+                        This page doesn’t exist or was moved.<br />
+                        Check the address, or head back to the index.
+                    </p>
+                    <a href="/" id="back-link">
+                        <span class="back-arrow" aria-hidden="true">←</span>
+                        <span>Back to home</span>
+                    </a>
+                </div>
+            </section>
+        </main>
+
+        <Footer />
+    </div>
+</Layout>
+
+<style>
+    #site-wrap {
+        padding: 0 21.6px;
+        max-width: calc(var(--max-w) + 43.2px);
+        margin: 0 auto;
+    }
+
+    #notfound {
+        max-width: var(--max-w);
+        margin: 0 auto;
+        border-bottom: none;
+    }
+
+    #notfound-inner {
+        padding: 61.2px 0 82.8px;
+    }
+
+    .label {
+        font-family: var(--font-mono);
+        font-size: 12.6px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        display: block;
+        margin-bottom: 7.2px;
+    }
+
+    #notfound-title {
+        font-family: var(--font-doto);
+        font-variation-settings: "ROND" 0;
+        font-size: clamp(3.2rem, 7.5vw, 6rem);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        line-height: 0.95;
+        text-transform: uppercase;
+        color: var(--blue);
+        margin-bottom: 21.6px;
+    }
+
+    #notfound-sub {
+        font-family: var(--font-mono);
+        font-size: 13.5px;
+        line-height: 1.75;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--blue-mid);
+        max-width: 432px;
+        margin-bottom: 32.4px;
+    }
+
+    #back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 7.2px;
+        font-family: var(--font-mono);
+        font-size: 12.6px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        transition: color 160ms var(--ease-out);
+    }
+
+    /* Plex Mono's arrow sits low on the line; lift it to the optical centre */
+    .back-arrow {
+        display: inline-block;
+        transform: translateY(-0.09em);
+    }
+
+    #back-link:hover {
+        color: var(--blue);
+    }
+
+    @media (max-width: 576px) {
+        #notfound-inner {
+            padding: 41.4px 0 54px;
+        }
+
+        #notfound-title {
+            font-size: clamp(2.8rem, 13vw, 4.2rem);
+        }
+    }
+</style>

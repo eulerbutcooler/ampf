@@ -16,10 +16,10 @@ const dotoFont = readFileSync(
   resolve(projectRoot, "src/fonts/Doto-Bold.ttf"),
 );
 const monoFont = readFileSync(
-  resolve(projectRoot, "src/fonts/ShareTechMono-Regular.ttf"),
+  resolve(projectRoot, "src/fonts/IBMPlexMono-Regular.ttf"),
 );
 const sansFont = readFileSync(
-  resolve(projectRoot, "src/fonts/OpenSans-Regular.ttf"),
+  resolve(projectRoot, "src/fonts/IBMPlexSans-Regular.ttf"),
 );
 
 export const getStaticPaths: GetStaticPaths = async () => {
@@ -46,6 +46,36 @@ function formatDate(dateStr: string): string {
     .toUpperCase();
 }
 
+/** The site's dotted rule, drawn as a row of dots so it renders identically
+ *  everywhere (satori's dotted borders are unreliable). */
+function dottedRule() {
+  const dots = 116;
+  return {
+    type: "div",
+    props: {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        width: "100%",
+        margin: "0 0 30px 0",
+      },
+      children: Array.from({ length: dots }, () => ({
+        type: "div",
+        props: {
+          style: {
+            width: "3px",
+            height: "3px",
+            borderRadius: "50%",
+            backgroundColor: "rgba(244, 245, 247, 0.26)",
+            display: "flex",
+          },
+        },
+      })),
+    },
+  };
+}
+
 export const GET: APIRoute = async ({ props }) => {
   const { title, description, tag, date } = props as {
     title: string;
@@ -54,38 +84,55 @@ export const GET: APIRoute = async ({ props }) => {
     date: string;
   };
 
-  const metaLine = `[${tag.toUpperCase()}]   ${formatDate(date)}`;
-
-  // Satori accepts plain VNode objects at runtime but types expect ReactNode;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const element: any = {
       type: "div",
       props: {
         style: {
           display: "flex",
           flexDirection: "column",
-          justifyContent: "flex-end",
+          justifyContent: "center",
           width: "1200px",
           height: "630px",
-          backgroundColor: "#142f82",
+          backgroundColor: "#08090c",
+          // the dusk glow from the hero artwork, kept faint
+          backgroundImage:
+            "radial-gradient(circle at 84% 82%, rgba(255, 183, 77, 0.16), rgba(255, 183, 77, 0) 52%)",
           padding: "72px 80px",
           boxSizing: "border-box",
         },
         children: [
           {
-            type: "p",
+            type: "div",
             props: {
               style: {
-                fontFamily: "Share Tech Mono",
+                display: "flex",
+                alignItems: "baseline",
+                gap: "26px",
+                marginBottom: "18px",
+                fontFamily: "IBM Plex Mono",
                 fontSize: "22px",
                 letterSpacing: "0.12em",
-                color: "rgba(255,255,255,0.65)",
-                marginBottom: "24px",
-                display: "flex",
+                textTransform: "uppercase",
               },
-              children: metaLine,
+              children: [
+                {
+                  type: "span",
+                  props: {
+                    style: { color: "#8b9bff", display: "flex" },
+                    children: `[${tag}]`,
+                  },
+                },
+                {
+                  type: "span",
+                  props: {
+                    style: { color: "rgba(244, 245, 247, 0.6)", display: "flex" },
+                    children: formatDate(date),
+                  },
+                },
+              ],
             },
           },
+          dottedRule(),
           {
             type: "h1",
             props: {
@@ -108,10 +155,10 @@ export const GET: APIRoute = async ({ props }) => {
             type: "p",
             props: {
               style: {
-                fontFamily: "Open Sans",
+                fontFamily: "IBM Plex Sans",
                 fontSize: "26px",
                 lineHeight: 1.5,
-                color: "rgba(255,255,255,0.82)",
+                color: "rgba(244, 245, 247, 0.82)",
                 display: "flex",
                 maxWidth: "900px",
               },
@@ -124,8 +171,8 @@ export const GET: APIRoute = async ({ props }) => {
 
   const fonts: Font[] = [
     { name: "Doto", data: toArrayBuffer(dotoFont), weight: 700, style: "normal" },
-    { name: "Share Tech Mono", data: toArrayBuffer(monoFont), weight: 400, style: "normal" },
-    { name: "Open Sans", data: toArrayBuffer(sansFont), weight: 400, style: "normal" },
+    { name: "IBM Plex Mono", data: toArrayBuffer(monoFont), weight: 400, style: "normal" },
+    { name: "IBM Plex Sans", data: toArrayBuffer(sansFont), weight: 400, style: "normal" },
   ];
 
   const svg = await satori(element, { width: 1200, height: 630, fonts });

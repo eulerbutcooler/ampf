@@ -11,22 +11,24 @@ import Footer from "../components/Footer.astro";
 <Layout
     title="eulerbutcooler"
     description="Backend developer building fast, scalable systems, APIs, and infrastructure."
-    ogImage={new URL("/og-preview.jpg?v=3", Astro.site).toString()}
+    ogImage={new URL("/og-preview.jpg?v=7", Astro.site).toString()}
 >
     <div id="site-wrap">
         <NavBar />
-        <Hero />
-        <AboutGrid />
-        <RecentBlogs />
-        <ProjectsSection />
+        <main id="main">
+            <Hero />
+            <AboutGrid />
+            <RecentBlogs />
+            <ProjectsSection />
+        </main>
         <Footer />
     </div>
 </Layout>
 
 <style>
     #site-wrap {
-        padding: 0 24px;
-        max-width: calc(var(--max-w) + 48px);
+        padding: 0 21.6px;
+        max-width: calc(var(--max-w) + 43.2px);
         margin: 0 auto;
     }
 

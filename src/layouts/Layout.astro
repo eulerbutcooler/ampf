@@ -18,6 +18,8 @@ const {
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+        <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="generator" content={Astro.generator} />
         <meta name="description" content={description} />
         <meta property="og:title" content={title} />
@@ -32,58 +34,46 @@ const {
         />
         {ogImage && <meta name="twitter:image" content={ogImage} />}
         <title>{title}</title>
+        <meta name="theme-color" content="#08090c" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Doto:ROND,wght@0,100..900;1,100..900&family=Share+Tech+Mono&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Doto:ROND,wght@0,100..900;1,100..900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap"
             rel="stylesheet"
         />
-        <script is:inline>
-            (function () {
-                const saved = localStorage.getItem("theme");
-                if (saved === "dark" || !saved) {
-                    document.documentElement.setAttribute("data-theme", "dark");
-                } else if (saved === "light") {
-                    document.documentElement.setAttribute(
-                        "data-theme",
-                        "light",
-                    );
-                }
-            })();
-        </script>
     </head>
     <body>
+        <a class="skip-link" href="#main">Skip to content</a>
         <slot />
     </body>
 </html>
 
 <style is:global>
     :root {
-        --blue: #1300cc;
-        --blue-mid: rgba(19, 0, 204, 0.82);
-        --blue-dim: rgba(19, 0, 204, 0.65);
-        --blue-subtle: rgba(19, 0, 204, 0.12);
-        --accent-orange: #e65100;
-        --accent-teal: #00897b;
-        --bg: #ffffff;
-        --bg-off: #f5f5ff;
-        --border: rgba(19, 0, 204, 0.14);
-        --font-mono: "Share Tech Mono", "Courier New", monospace;
-        --font-doto: "Doto", monospace;
-        --font-sans: "Open Sans", sans-serif;
-        --max-w: 860px;
-    }
-
-    [data-theme="dark"] {
-        --blue: #ffffff;
-        --blue-mid: rgba(255, 255, 255, 0.82);
-        --blue-dim: rgba(255, 255, 255, 0.65);
-        --blue-subtle: rgba(255, 255, 255, 0.07);
+        /* Ink */
+        --blue: #f4f5f7;
+        --blue-mid: rgba(244, 245, 247, 0.82);
+        --blue-dim: rgba(244, 245, 247, 0.62);
+        --blue-subtle: rgba(255, 255, 255, 0.06);
+        --hero-ink: #ffb74d;
         --accent-orange: #ffb74d;
         --accent-teal: #4db6ac;
-        --bg: #142f82;
-        --bg-off: #1c1d2e;
+        --accent-blue: #8b9bff;
+        /* Ground */
+        --bg: #08090c;
         --border: rgba(255, 255, 255, 0.12);
+        --rule: rgba(244, 245, 247, 0.26);
+        /* Code panels */
+        --code-bg: #12141a;
+        --code-border: rgba(255, 255, 255, 0.08);
+        /* Motion */
+        --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+        --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+        --font-mono: "IBM Plex Mono", "Courier New", monospace;
+        --font-doto: "Doto", monospace;
+        --font-sans: "IBM Plex Sans", sans-serif;
+        --max-w: 900px;
+        color-scheme: dark;
     }
 
     *,
@@ -95,15 +85,30 @@ const {
     }
 
     html {
-        font-size: 18px;
+        font-size: 15.3px;
+        scrollbar-gutter: stable;
         -webkit-font-smoothing: antialiased;
+        background-color: var(--bg);
     }
 
     body {
-        background: var(--bg);
         color: var(--blue);
         font-family: var(--font-sans);
         min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Sticky footer: main absorbs the slack, the footer sits at the page floor */
+    #site-wrap {
+        flex: 1 0 auto;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #main {
+        flex: 1 0 auto;
     }
 
     ::selection {
@@ -114,5 +119,55 @@ const {
     a {
         color: inherit;
         text-decoration: none;
+    }
+
+    button {
+        touch-action: manipulation;
+    }
+
+    :focus-visible {
+        outline: 1.8px solid var(--blue);
+        outline-offset: 2.7px;
+    }
+
+    h1,
+    h2,
+    h3 {
+        text-wrap: balance;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        html {
+            scroll-behavior: smooth;
+        }
+    }
+
+    p {
+        text-wrap: pretty;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .skip-link {
+        position: absolute;
+        top: -43.2px;
+        left: 14.4px;
+        z-index: 100;
+        padding: 7.2px 12.6px;
+        background: var(--blue);
+        color: var(--bg);
+        font-family: var(--font-mono);
+        font-size: 11.7px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        transition: top 180ms var(--ease-out);
+    }
+
+    .skip-link:focus-visible {
+        top: 10.8px;
+        outline-offset: 0;
     }
 </style>

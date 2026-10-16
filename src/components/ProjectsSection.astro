@@ -23,9 +23,7 @@ const featured = projects.filter((p) => p.featured);
       ))}
 
       <a href="/projects" class="all-row">
-        <span class="all-label"></span>
         <span class="all-text">All projects →</span>
-        <span></span>
       </a>
     </div>
   </div>
@@ -33,25 +31,25 @@ const featured = projects.filter((p) => p.featured);
 
 <style>
   #projects {
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px dotted var(--rule);
   }
 
   #projects-inner {
     max-width: var(--max-w);
     margin: 0 auto;
-    padding: 28px 0;
+    padding: 34.2px 0;
     display: grid;
-    grid-template-columns: 110px 1fr;
-    gap: 0 24px;
+    grid-template-columns: 99px 1fr;
+    gap: 0 21.6px;
     align-items: start;
   }
 
   .section-label {
-    font-size: 12px;
+    font-size: 12.6px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--blue-dim);
-    padding-top: 20px;
+    padding-top: 18px;
   }
 
   #projects-list {
@@ -60,7 +58,7 @@ const featured = projects.filter((p) => p.featured);
   }
 
   #projects-list > :global(.project-row:first-child) {
-    border-top: 1px solid var(--border);
+    border-top: 1px dotted var(--rule);
   }
 
   #projects-list > :global(.project-row:last-child) {
@@ -68,16 +66,14 @@ const featured = projects.filter((p) => p.featured);
   }
 
   .all-row {
-    display: grid;
-    grid-template-columns: 32px 1fr auto;
-    gap: 0 20px;
-    align-items: center;
-    padding: 14px 8px;
+    display: block;
+    padding: 15.3px 18px;
     text-decoration: none;
     color: var(--blue-dim);
-    transition: background 0.12s, color 0.12s;
-    margin: 0 -8px;
-    border-top: 1px solid var(--border);
+    transition:
+      background-color 140ms var(--ease-out),
+      color 160ms var(--ease-out);
+    border-top: 1px dotted var(--rule);
   }
 
   .all-row:hover {
@@ -85,17 +81,21 @@ const featured = projects.filter((p) => p.featured);
     color: var(--blue);
   }
 
+  .all-row:active {
+    background: var(--border);
+  }
+
   .all-text {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 11.7px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 576px) {
     #projects-inner {
       grid-template-columns: 1fr;
-      gap: 16px;
+      gap: 14.4px;
     }
 
     .section-label {

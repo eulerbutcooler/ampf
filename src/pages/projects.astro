@@ -9,206 +9,271 @@ const tags = ["All", ...Array.from(new Set(projects.map((p) => p.tag)))];
 ---
 
 <Layout
-  title="Projects — eulerbutcooler"
-  description="Things I've built — systems, tooling, and web."
+    title="Projects - eulerbutcooler"
+    description="Things I've built - systems, tooling, and web."
 >
-  <div id="site-wrap">
-    <NavBar />
+    <div id="site-wrap">
+        <NavBar />
 
-    <section id="projects-hero">
-      <div id="projects-hero-inner">
-        <span class="label">Work —</span>
-        <h1 id="projects-title">THINGS<br />I'VE BUILT.</h1>
-        <p id="projects-sub">
-          Systems · Tooling · Web.<br />
-          Mostly Go, sometimes TypeScript.
-        </p>
-      </div>
-    </section>
+        <main id="main">
+            <section id="projects-hero">
+                <div id="projects-hero-inner">
+                    <!-- <span class="label">Work -</span> -->
+                    <h1 id="projects-title">
+                        THINGS
+                        <br />
+                        I'VE BUILT.
+                    </h1>
+                    <p id="projects-sub">
+                        Systems · Tooling · Web.
+                        <br />
+                        Mostly Go, sometimes TypeScript.
+                    </p>
+                </div>
+            </section>
 
-    <section id="filter-bar">
-      <div id="filter-inner">
-        <span class="section-label">[Filter]</span>
-        <div id="filter-tags">
-          {tags.map((t) => (
-            <button class={`tag-btn${t === "All" ? " active" : ""}`} data-tag={t}>
-              {t}
-            </button>
-          ))}
-        </div>
-      </div>
-    </section>
+            <section id="filter-bar">
+                <div id="filter-inner">
+                    <span class="section-label">[Filter]</span>
+                    <div id="filter-tags">
+                        {tags.map((t) => (
+                            <button
+                                class={`tag-btn${t === "All" ? " active" : ""}`}
+                                data-tag={t}
+                            >
+                                {t}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </section>
 
-    <section id="projects-section">
-      <div id="projects-inner">
-        <span class="section-label">[{projects.length} projects]</span>
-        <div id="projects-list">
-          {projects.map((p) => (
-            <div class="project-wrap" data-tag={p.tag}>
-              <ProjectCard
-                index={p.index}
-                title={p.title}
-                description={p.description}
-                stack={p.stack}
-                github={p.github}
-                live={p.live}
-                year={p.year}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-    <Footer />
-  </div>
+            <section id="projects-section">
+                <div id="projects-inner">
+                    <span
+                        class="section-label"
+                        id="projects-count"
+                        aria-live="polite"
+                    >
+                        [{projects.length} projects]
+                    </span>
+                    <div id="projects-list">
+                        {projects.map((p) => (
+                            <div class="project-wrap" data-tag={p.tag}>
+                                <ProjectCard
+                                    index={p.index}
+                                    title={p.title}
+                                    description={p.description}
+                                    stack={p.stack}
+                                    github={p.github}
+                                    live={p.live}
+                                    year={p.year}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        </main>
+        <Footer />
+    </div>
 </Layout>
 
 <script>
-  (() => {
-    const btns = document.querySelectorAll<HTMLButtonElement>(".tag-btn");
-    const wraps = document.querySelectorAll<HTMLDivElement>(".project-wrap");
+    (() => {
+        const btns = document.querySelectorAll<HTMLButtonElement>(".tag-btn");
+        const wraps =
+            document.querySelectorAll<HTMLDivElement>(".project-wrap");
+        const count = document.getElementById("projects-count");
+        const tags = new Set(Array.from(btns).map((b) => b.dataset.tag ?? ""));
 
-    btns.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const tag = btn.dataset.tag!;
-        btns.forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        wraps.forEach((w) => {
-          w.style.display = tag === "All" || w.dataset.tag === tag ? "" : "none";
+        function apply(tag: string) {
+            let visible = 0;
+            btns.forEach((b) =>
+                b.classList.toggle("active", b.dataset.tag === tag),
+            );
+            wraps.forEach((w) => {
+                const show = tag === "All" || w.dataset.tag === tag;
+                w.style.display = show ? "" : "none";
+                if (show) visible++;
+            });
+            if (count) {
+                count.textContent = `[${visible} ${visible === 1 ? "project" : "projects"}]`;
+            }
+            const url =
+                tag === "All"
+                    ? location.pathname
+                    : `?tag=${encodeURIComponent(tag)}`;
+            history.replaceState(null, "", url);
+        }
+
+        const param = new URLSearchParams(location.search).get("tag") ?? "All";
+        apply(tags.has(param) ? param : "All");
+
+        btns.forEach((btn) => {
+            btn.addEventListener("click", () =>
+                apply(btn.dataset.tag ?? "All"),
+            );
         });
-      });
-    });
-  })();
+    })();
 </script>
 
 <style>
-  #site-wrap {
-    padding: 0 24px;
-    max-width: calc(var(--max-w) + 48px);
-    margin: 0 auto;
-  }
+    #site-wrap {
+        padding: 0 21.6px;
+        max-width: calc(var(--max-w) + 43.2px);
+        margin: 0 auto;
+    }
 
-  /* Hero */
-  #projects-hero { border-bottom: 1px solid var(--border); }
+    /* Hero */
+    #projects-hero {
+        border-bottom: 1px dotted var(--rule);
+    }
 
-  #projects-hero-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 48px 0 40px;
-  }
+    #projects-hero-inner {
+        max-width: var(--max-w);
+        margin: 0 auto;
+        padding: 43.2px 0 36px;
+    }
 
-  .label {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--blue-dim);
-    display: block;
-    margin-bottom: 4px;
-  }
+    .label {
+        font-family: var(--font-mono);
+        font-size: 12.6px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        display: block;
+        margin-bottom: 3.6px;
+    }
 
-  #projects-title {
-    font-family: var(--font-doto);
-    font-variation-settings: "ROND" 0;
-    font-size: clamp(3rem, 8vw, 5.5rem);
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    line-height: 0.95;
-    text-transform: uppercase;
-    color: var(--blue);
-    margin-bottom: 20px;
-  }
+    #projects-title {
+        font-family: var(--font-doto);
+        font-variation-settings: "ROND" 0;
+        font-size: clamp(3.4rem, 8.5vw, 7rem);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        line-height: 0.95;
+        text-transform: uppercase;
+        color: var(--accent-blue);
+        margin-bottom: 18px;
+    }
 
-  #projects-sub {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    line-height: 1.75;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: var(--blue-mid);
-    max-width: 480px;
-  }
+    #projects-sub {
+        font-family: var(--font-mono);
+        font-size: 13.5px;
+        line-height: 1.75;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--blue-mid);
+        max-width: 432px;
+    }
 
-  /* Filter */
-  #filter-bar { border-bottom: 1px solid var(--border); }
+    /* Filter */
+    #filter-bar {
+        border-bottom: 1px dotted var(--rule);
+    }
 
-  #filter-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 16px 0;
-    display: grid;
-    grid-template-columns: 110px 1fr;
-    gap: 0 24px;
-    align-items: center;
-  }
+    #filter-inner {
+        max-width: var(--max-w);
+        margin: 0 auto;
+        padding: 14.4px 0;
+        display: grid;
+        grid-template-columns: 99px 1fr;
+        gap: 0 21.6px;
+        align-items: center;
+    }
 
-  #filter-tags {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
+    #filter-tags {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+    }
 
-  .tag-btn {
-    background: none;
-    border: 1px solid var(--border);
-    padding: 4px 12px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--blue-dim);
-    cursor: pointer;
-    transition: background 0.12s, color 0.12s, border-color 0.12s;
-  }
+    .tag-btn {
+        background: none;
+        border: 1px solid var(--border);
+        padding: 5.4px 14.4px;
+        font-family: var(--font-mono);
+        font-size: 11.7px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        cursor: pointer;
+        touch-action: manipulation;
+        transition:
+            background-color 140ms var(--ease-out),
+            color 140ms var(--ease-out),
+            border-color 140ms var(--ease-out),
+            transform 120ms var(--ease-out);
+    }
 
-  .tag-btn:hover { color: var(--blue); border-color: var(--blue); }
+    .tag-btn:hover {
+        color: var(--blue);
+        border-color: var(--blue);
+    }
 
-  .tag-btn.active {
-    background: var(--blue);
-    border-color: var(--blue);
-    color: var(--bg);
-  }
+    .tag-btn:active {
+        transform: scale(0.96);
+    }
 
-  /* Projects list */
-  #projects-section { border-bottom: 1px solid var(--border); }
+    .tag-btn.active {
+        background: var(--blue);
+        border-color: var(--blue);
+        color: var(--bg);
+    }
 
-  #projects-inner {
-    max-width: var(--max-w);
-    margin: 0 auto;
-    padding: 28px 0;
-    display: grid;
-    grid-template-columns: 110px 1fr;
-    gap: 0 24px;
-    align-items: start;
-  }
+    /* Projects list */
+    #projects-section {
+        border-bottom: 1px dotted var(--rule);
+    }
 
-  .section-label {
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--blue-dim);
-    padding-top: 20px;
-  }
+    #projects-inner {
+        max-width: var(--max-w);
+        margin: 0 auto;
+        padding: 34.2px 0;
+        display: grid;
+        grid-template-columns: 99px 1fr;
+        gap: 0 21.6px;
+        align-items: start;
+    }
 
-  #projects-list {
-    display: flex;
-    flex-direction: column;
-  }
+    .section-label {
+        font-size: 12.6px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        padding-top: 18px;
+    }
 
-  /* The ProjectCard component handles its own border-bottom,
-     hide the last one via the wrapper */
-  .project-wrap:last-child > :global(.project-row) {
-    border-bottom: none;
-  }
+    #projects-list {
+        display: flex;
+        flex-direction: column;
+    }
 
-  .project-wrap:first-child > :global(.project-row) {
-    border-top: 1px solid var(--border);
-  }
+    /* The ProjectCard component handles its own border-bottom,
+       hide the last one via the wrapper */
+    .project-wrap:last-child > :global(.project-row) {
+        border-bottom: none;
+    }
 
-  @media (max-width: 640px) {
-    #projects-hero-inner { padding: 32px 0 28px; }
-    #filter-inner, #projects-inner { grid-template-columns: 1fr; gap: 16px; }
-    .section-label { padding-top: 0; }
-    #projects-title { font-size: clamp(2.4rem, 13vw, 4rem); }
-  }
+    .project-wrap:first-child > :global(.project-row) {
+        border-top: 1px dotted var(--rule);
+    }
+
+    @media (max-width: 576px) {
+        #projects-hero-inner {
+            padding: 30.6px 0 27px;
+        }
+        #filter-inner,
+        #projects-inner {
+            grid-template-columns: 1fr;
+            gap: 14.4px;
+        }
+        .section-label {
+            padding-top: 0;
+        }
+        #projects-title {
+            font-size: clamp(2.8rem, 13vw, 4.5rem);
+        }
+    }
 </style>

@@ -1,47 +1,157 @@
 ---
+interface Props {
+  /** Footer plate. Hidden inside individual blog posts, shown everywhere else. */
+  art?: boolean;
+}
+const path = Astro.url.pathname;
+const isPost = path.startsWith("/blog/");
+const { art = !isPost } = Astro.props;
 ---
 
 <footer id="footer">
   <div id="footer-inner">
-    <a href="mailto:eulerbutcooler@gmail.com" class="foot-link">Email</a>
-    <a href="https://github.com/eulerbutcooler" class="foot-link" target="_blank" rel="noopener">GitHub</a>
-    <a href="https://linkedin.com/in/amaan-pathan" class="foot-link" target="_blank" rel="noopener">LinkedIn</a>
+    <div id="footer-plate">
+      {
+        art && (
+          <div id="footer-art">
+            <ascii-art
+              piece="night-highway"
+              label="A desert highway at dusk, rushing toward the mountains and the last light"
+            ></ascii-art>
+          </div>
+        )
+      }
+
+      <div id="footer-row">
+        <span class="foot-value">Amaan Pathan</span>
+        <div class="foot-links">
+          <a href="mailto:eulerbutcooler@gmail.com">Email</a>
+          <a href="https://github.com/eulerbutcooler" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://linkedin.com/in/amaan-pathan" target="_blank" rel="noopener">LinkedIn</a>
+        </div>
+      </div>
+    </div>
   </div>
 </footer>
 
+{art && <script is:inline type="module" src="/ascii/ascii.js"></script>}
+
 <style>
-  #footer {
-    display: none;
+  #footer-inner {
+    max-width: var(--content-w, var(--max-w));
+    margin: 0 auto;
+    padding: 0 0 32.4px;
   }
 
-  @media (max-width: 640px) {
-    #footer {
-      display: block;
-      border-top: 1px solid var(--border);
+  /* The plate stacks the scene and the row in one cell; the row rides on top */
+  #footer-plate {
+    display: grid;
+    padding-top: 48.6px;
+  }
+
+  #footer-plate > * {
+    grid-area: 1 / 1;
+  }
+
+  /* Night highway band: a horizontal slice of the scene, clipped to the sheet */
+  #footer-art {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 860 / 250;
+    background: #07080f;
+    user-select: none;
+  }
+
+  #footer-art ascii-art {
+    position: absolute;
+    display: block;
+    top: 0;
+    left: 0;
+    right: 0;
+    transform: translateY(-25%);
+    pointer-events: none;
+  }
+
+  #footer-art canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* Soft floor so the row stays legible over the road */
+  #footer-art::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 86.4px;
+    background: linear-gradient(
+      to top,
+      rgba(7, 8, 15, 0.88),
+      rgba(7, 8, 15, 0)
+    );
+    pointer-events: none;
+  }
+
+  #footer-row {
+    position: relative;
+    z-index: 1;
+    align-self: end;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 21.6px;
+  }
+
+  #footer-plate:has(#footer-art) #footer-row {
+    padding-bottom: 21.6px;
+  }
+
+  .foot-value {
+    font-size: 13.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--blue);
+  }
+
+  .foot-links {
+    display: flex;
+    gap: 18px;
+  }
+
+  .foot-links a {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--blue-dim);
+    transition: color 160ms var(--ease-out);
+  }
+
+  .foot-links a:hover {
+    color: var(--blue);
+  }
+
+  @media (max-width: 576px) {
+    #footer-plate {
+      padding-top: 37.8px;
     }
 
-    #footer-inner {
-      max-width: var(--max-w);
-      margin: 0 auto;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 24px;
+    #footer-plate:has(#footer-art) #footer-row {
+      padding-bottom: 14.4px;
     }
 
-    .foot-link {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--blue-dim);
-      text-decoration: none;
-      transition: color 0.15s;
+    .foot-value {
+      font-size: 12.6px;
     }
 
-    .foot-link:hover {
-      color: var(--blue);
+    .foot-links {
+      gap: 12.6px;
+    }
+
+    .foot-links a {
+      font-size: 11.7px;
     }
   }
 </style>

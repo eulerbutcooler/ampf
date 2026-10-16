@@ -1,83 +1,136 @@
-<section id="hero">
-    <div id="hero-top">
-        <div id="hero-greeting">
-            <span class="label"></span>
-        </div>
-        <h1 id="hero-name">AMAAN<br />PATHAN.</h1>
-    </div>
+---
+---
 
-    <p id="hero-bio">Backend, DevOps, Frontend</p>
-    <p id="hero-bio">in that order</p>
+<section id="hero">
+    <div id="hero-plate">
+        <div class="plate-art">
+            <ascii-art
+                piece="cloud-sea"
+                label="The sun sinking into a drifting sea of orange cloud at dusk"
+            ></ascii-art>
+        </div>
+        <div class="plate-scrim"></div>
+
+        <div class="plate-content">
+            <h1 id="hero-name">
+                AMAAN
+                <br />
+                PATHAN.
+            </h1>
+            <p id="hero-bio">
+                Backend, DevOps, Frontend
+                <br />
+                in that order
+            </p>
+        </div>
+    </div>
 </section>
+
+<script is:inline type="module" src="/ascii/ascii.js"></script>
 
 <style>
     #hero {
         max-width: var(--max-w);
         margin: 0 auto;
-        padding: 48px 0 40px;
-        border-bottom: 1px solid var(--border);
+        padding: 30.6px 0 0;
     }
 
-    #hero-top {
+    /* The cloud-sea plate: a dusk window with the name drawn over it */
+    #hero-plate {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        aspect-ratio: 2 / 1;
+        background: #08090c;
+    }
+
+    .plate-art {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: max(
+            100%,
+            576px
+        ); /* = 2 × min-height, so the scene always covers */
+        pointer-events: none;
+        user-select: none;
+    }
+
+    .plate-art ascii-art {
+        display: block;
+        width: 100%;
+    }
+
+    .plate-art canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    /* Darkening scrim so the type stays legible over cloud and sea */
+    .plate-scrim {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+            linear-gradient(
+                to right,
+                rgba(8, 9, 12, 0.9),
+                rgba(8, 9, 12, 0.52) 44%,
+                rgba(8, 9, 12, 0) 72%
+            ),
+            linear-gradient(to top, rgba(8, 9, 12, 0.42), rgba(8, 9, 12, 0) 46%);
+    }
+
+    .plate-content {
+        position: relative;
+        height: 100%;
+        padding: clamp(27px, 4.8vw, 48.6px);
+        padding-left: 0;
         display: flex;
-        align-items: flex-start;
-        gap: 0;
         flex-direction: column;
-        margin-bottom: 28px;
-    }
-
-    #hero-greeting {
-        margin-bottom: 4px;
-    }
-
-    .label {
-        font-family: var(--font-mono);
-        font-size: 12px;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: var(--blue-dim);
+        justify-content: center;
     }
 
     #hero-name {
         font-family: var(--font-doto);
         font-variation-settings: "ROND" 0;
-        font-size: clamp(3.2rem, 9vw, 6rem);
+        font-size: clamp(3.2rem, 9vw, 7rem);
         font-weight: 700;
         letter-spacing: 0.04em;
-        line-height: 0.95;
+        line-height: 0.98;
         text-transform: uppercase;
-        color: var(--blue);
+        color: var(--hero-ink);
     }
 
     #hero-bio {
         font-family: var(--font-mono);
-        font-size: 13px;
+        font-size: 13.5px;
         line-height: 1.75;
         letter-spacing: 0.02em;
-        color: var(--blue-mid);
-        max-width: 560px;
+        color: rgba(255, 255, 255, 0.82);
+        max-width: 504px;
         text-transform: uppercase;
+        margin-top: 21.6px;
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 576px) {
         #hero {
-            padding: 32px 0 28px;
+            padding: 23.4px 0 0;
+        }
+
+        #hero-plate {
+            aspect-ratio: auto;
+            height: 288px;
         }
 
         #hero-name {
-            font-size: clamp(2.6rem, 14vw, 4rem);
+            font-size: clamp(2.8rem, 13vw, 4.4rem);
         }
 
-        #hero-meta {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .meta-item {
-            border-right: none;
-            margin-right: 0;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
-            margin-bottom: 0;
+        #hero-bio {
+            font-size: 12.6px;
         }
     }
 </style>

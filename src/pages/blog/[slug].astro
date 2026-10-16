@@ -3,6 +3,8 @@ import { getCollection, render } from "astro:content";
 import Layout from "../../layouts/Layout.astro";
 import NavBar from "../../components/NavBar.astro";
 import Callout from "../../components/mdx/Callout.astro";
+import Figure from "../../components/mdx/Figure.astro";
+import Embed from "../../components/mdx/Embed.astro";
 import Footer from "../../components/Footer.astro";
 
 export async function getStaticPaths() {
@@ -17,7 +19,10 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
+
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const showToc = toc.length >= 2;
 
 // Format "2025-04-12" → "April 12, 2025"
 const fmt = new Intl.DateTimeFormat("en-US", {
@@ -30,67 +35,276 @@ const dateLabel = fmt.format(new Date(post.data.date));
 ---
 
 <Layout
-    title={`${post.data.title} — eulerbutcooler`}
+    title={`${post.data.title} - eulerbutcooler`}
     description={post.data.description}
-    ogImage={new URL(`/open-graph/${post.id}.png?v=2`, Astro.site).toString()}
+    ogImage={new URL(`/open-graph/${post.id}.png?v=3`, Astro.site).toString()}
 >
     <div id="site-wrap">
         <NavBar />
 
-        <article id="post">
-            <header id="post-header">
-                <div id="post-meta-top">
-                    <span class="post-tag">[{post.data.tag}]</span>
-                    <span class="post-date">{dateLabel}</span>
-                </div>
-                <h1 id="post-title">{post.data.title}</h1>
-                <p id="post-desc">{post.data.description}</p>
-                <div id="post-divider"></div>
-            </header>
+        <main id="main">
+            <div id="post" class={showToc ? "" : "post--plain"}>
+                {
+                    showToc && (
+                        <aside id="toc">
+                            <span class="toc-label">[Contents]</span>
+                            <nav aria-label="Table of contents">
+                                <ol class="toc-list">
+                                    {toc.map((h) => (
+                                        <li
+                                            class={`toc-item toc-item--h${h.depth}`}
+                                        >
+                                            <a href={`#${h.slug}`}>{h.text}</a>
+                                        </li>
+                                    ))}
+                                </ol>
+                            </nav>
+                        </aside>
+                    )
+                }
 
-            <div id="post-body">
-                <Content components={{ Callout }} />
+                <article id="post-article">
+                    <header id="post-header">
+                        <div id="post-meta-top">
+                            <span class="post-tag">[{post.data.tag}]</span>
+                            <span class="post-date">{dateLabel}</span>
+                            <span class="post-views" data-views hidden></span>
+                        </div>
+                        <h1 id="post-title">{post.data.title}</h1>
+                        <p id="post-desc">{post.data.description}</p>
+                    </header>
+
+                    <div id="post-body">
+                        <Content components={{ Callout, Figure, Embed }} />
+                    </div>
+
+                    <footer id="post-footer">
+                        <a href="/blogs" id="back-link">
+                            <span class="back-arrow" aria-hidden="true">←</span>
+                            <span>All posts</span>
+                        </a>
+                    </footer>
+                </article>
             </div>
-
-            <footer id="post-footer">
-                <a href="/blogs" id="back-link">← All posts</a>
-            </footer>
-        </article>
+        </main>
 
         <Footer />
     </div>
 </Layout>
 
+<script>
+    // Page views for this post, read from the analytics endpoint. The element
+    // stays hidden when the endpoint has no data (dev, or before the
+    // Cloudflare analytics env vars are configured).
+    (() => {
+        const el = document.querySelector<HTMLElement>("[data-views]");
+        if (!el) return;
+        fetch(`/api/views${location.pathname}`)
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                if (!data || typeof data.views !== "number" || data.views <= 0) return;
+                el.textContent = `${data.views.toLocaleString("en-US")} views`;
+                el.hidden = false;
+            })
+            .catch(() => {});
+    })();
+</script>
+
+<script>
+    // Fit embedded figures to their content: the panel's natural height varies
+    // with width, so no fixed height fits every viewport. Same-origin only -
+    // cross-origin embeds keep their authored height.
+    (() => {
+        const fit = (frame: HTMLIFrameElement) => {
+            try {
+                const doc = frame.contentDocument;
+                if (!doc) return;
+                frame.style.height = "150px"; // reset so the content measures true
+                const h = doc.documentElement.scrollHeight;
+                // +4px covers sub-pixel rounding and document borders, which
+                // would otherwise leave a 1-2px overflow and a scrollbar.
+                if (h > 150) frame.style.height = `${h + 4}px`;
+            } catch {
+                /* cross-origin: leave the authored height */
+            }
+        };
+        const frames = () =>
+            document.querySelectorAll<HTMLIFrameElement>(".embed-frame");
+        frames().forEach((frame) => {
+            if (frame.contentDocument?.readyState === "complete") fit(frame);
+            frame.addEventListener("load", () => fit(frame));
+        });
+        let timer = 0;
+        addEventListener(
+            "resize",
+            () => {
+                clearTimeout(timer);
+                timer = window.setTimeout(() => frames().forEach(fit), 150);
+            },
+            { passive: true },
+        );
+    })();
+</script>
+
+<script>
+    (() => {
+        const links = Array.from(
+            document.querySelectorAll<HTMLAnchorElement>("#toc a"),
+        );
+        if (links.length === 0) return;
+
+        const targets = links.flatMap((a) => {
+            const el = document.getElementById(
+                decodeURIComponent(a.hash.slice(1)),
+            );
+            return el ? [{ a, el }] : [];
+        });
+
+        let active: HTMLAnchorElement | null = null;
+        let ticking = false;
+
+        function update() {
+            ticking = false;
+            const line = 110;
+            let current: HTMLAnchorElement | null = null;
+
+            // At the bottom of the page the last heading can't reach the
+            // activation line, so activate the final entry directly.
+            const atBottom =
+                window.innerHeight + window.scrollY >=
+                document.documentElement.scrollHeight - 4;
+
+            if (atBottom) {
+                current = targets[targets.length - 1].a;
+            } else {
+                for (const t of targets) {
+                    if (t.el.getBoundingClientRect().top <= line) current = t.a;
+                    else break;
+                }
+            }
+
+            if (current === active) return;
+            if (active) {
+                active.classList.remove("active");
+                active.removeAttribute("aria-current");
+            }
+            active = current;
+            if (active) {
+                active.classList.add("active");
+                active.setAttribute("aria-current", "true");
+            }
+        }
+
+        function schedule() {
+            if (!ticking) {
+                ticking = true;
+                requestAnimationFrame(update);
+            }
+        }
+
+        addEventListener("scroll", schedule, { passive: true });
+        addEventListener("resize", schedule, { passive: true });
+        update();
+    })();
+</script>
+
 <style>
     #site-wrap {
-        padding: 0 24px;
-        max-width: calc(var(--max-w) + 48px);
+        /* Post pages use a wider sheet so the writing column can breathe */
+        --content-w: 1062px;
+        padding: 0 21.6px;
+        max-width: calc(var(--content-w) + 43.2px);
         margin: 0 auto;
+    }
+
+    #post {
+        max-width: var(--content-w);
+        margin: 0 auto;
+        padding: 48.6px 0 59.4px;
+        display: grid;
+        grid-template-columns: 252px minmax(0, 1fr);
+        gap: 0 57.6px;
+        align-items: start;
+    }
+
+    #post.post--plain {
+        grid-template-columns: minmax(0, 723.6px);
+        justify-content: center;
+    }
+
+    /* Contents rail */
+    #toc {
+        position: sticky;
+        top: 36px;
+        padding-top: 1px;
+    }
+
+    .toc-label {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 11.7px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        margin-bottom: 10.8px;
+    }
+
+    .toc-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .toc-item a {
+        display: block;
+        padding: 5.4px 0;
+        font-family: var(--font-mono);
+        font-size: 14.4px;
+        line-height: 1.55;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        transition: color 160ms var(--ease-out);
+    }
+
+    .toc-item a:hover {
+        color: var(--blue-mid);
+    }
+
+    .toc-item a.active {
+        color: var(--blue);
+    }
+
+    .toc-item--h3 a {
+        position: relative;
+        padding-left: 18px;
+    }
+
+    .toc-item--h3 a::before {
+        content: "└";
+        position: absolute;
+        left: 0;
+        color: var(--blue-dim);
+        opacity: 0.7;
     }
 
     /* Header */
-    #post {
-        max-width: var(--max-w);
-        margin: 0 auto;
-        padding: 48px 0 60px;
-    }
-
     #post-header {
-        margin-bottom: 40px;
-        padding-bottom: 32px;
-        border-bottom: 1px solid var(--border);
+        margin-bottom: 36px;
+        padding-bottom: 28.8px;
+        border-bottom: 1px dotted var(--rule);
     }
 
     #post-meta-top {
         display: flex;
         align-items: center;
-        gap: 20px;
-        margin-bottom: 16px;
+        gap: 18px;
+        margin-bottom: 14.4px;
     }
 
     .post-tag {
         font-family: var(--font-mono);
-        font-size: 11px;
+        font-size: 11.7px;
         letter-spacing: 0.14em;
         text-transform: uppercase;
         color: var(--blue-dim);
@@ -98,59 +312,77 @@ const dateLabel = fmt.format(new Date(post.data.date));
 
     .post-date {
         font-family: var(--font-mono);
-        font-size: 11px;
+        font-size: 11.7px;
         letter-spacing: 0.1em;
         text-transform: uppercase;
+        color: var(--blue-dim);
+    }
+
+    /* Filled in by the script when /api/views has data; hidden otherwise */
+    .post-views {
+        font-family: var(--font-mono);
+        font-size: 11.7px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+    }
+
+    .post-views::before {
+        content: "· ";
         color: var(--blue-dim);
     }
 
     #post-title {
         font-family: var(--font-doto);
         font-variation-settings: "ROND" 0;
-        font-size: clamp(1.8rem, 5vw, 3rem);
+        font-size: clamp(2.2rem, 4.6vw, 3.8rem);
         font-weight: 700;
         letter-spacing: 0.04em;
         line-height: 1.1;
         text-transform: uppercase;
         color: var(--accent-orange);
-        margin-bottom: 16px;
+        margin-bottom: 14.4px;
     }
 
     #post-desc {
         font-family: var(--font-sans);
-        font-size: 14px;
+        font-size: 14.4px;
         line-height: 1.75;
         letter-spacing: 0.02em;
         color: var(--blue-mid);
-        max-width: 560px;
+        max-width: 576px;
     }
 
     /* Body prose */
     #post-body {
         font-family: var(--font-sans);
-        font-size: 15px;
-        line-height: 1.85;
+        font-size: 16.2px;
+        line-height: 1.75;
         letter-spacing: 0.01em;
         color: var(--blue);
-        max-width: 680px;
+    }
+
+    #post-body :global(h2),
+    #post-body :global(h3) {
+        scroll-margin-top: 28.8px;
     }
 
     #post-body :global(h2) {
         font-family: var(--font-doto);
         font-variation-settings: "ROND" 0;
-        font-size: 1.4rem;
+        font-size: 1.8rem;
         font-weight: 700;
         letter-spacing: 0.06em;
         text-transform: uppercase;
         color: var(--accent-orange);
         margin: 2.4em 0 0.8em;
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--border);
+        padding-bottom: 7.2px;
+        border-bottom: 1px dotted var(--rule);
     }
 
     #post-body :global(h3) {
         font-family: var(--font-mono);
-        font-size: 12px;
+        font-size: 12.6px;
         letter-spacing: 0.14em;
         text-transform: uppercase;
         color: var(--accent-teal);
@@ -158,42 +390,49 @@ const dateLabel = fmt.format(new Date(post.data.date));
     }
 
     #post-body :global(p) {
-        margin-bottom: 1.4em;
-        font-size: 16px;
-        line-height: 1.6;
+        margin-bottom: 1.3em;
+        font-size: 16.2px;
+        line-height: 1.72;
         color: var(--blue-mid);
     }
 
     #post-body :global(a) {
         color: var(--accent-teal);
         text-decoration: underline;
-        text-underline-offset: 3px;
+        text-underline-offset: 2.7px;
+        transition: color 160ms var(--ease-out);
+    }
+
+    #post-body :global(a:hover) {
+        color: var(--blue);
     }
 
     #post-body :global(code) {
         font-family: var(--font-mono);
         font-size: 0.88em;
         background: var(--blue-subtle);
-        padding: 1px 5px;
-        border-radius: 2px;
+        padding: 1px 4.5px;
+        border-radius: 1.8px;
         color: var(--blue);
     }
 
     #post-body :global(pre) {
-        background: var(--blue-subtle);
-        border: 1px solid var(--border);
-        padding: 18px 20px;
+        /* Shiki ships inline styles - override them to keep panels on-palette */
+        background: var(--code-bg) !important;
+        border: 1px solid var(--code-border);
+        padding: 18px 19.8px;
         overflow-x: auto;
+        scrollbar-width: thin;
         margin: 1.6em 0;
-        border-radius: 2px;
+        border-radius: 1.8px;
     }
 
     #post-body :global(pre code) {
         background: none;
         padding: 0;
-        font-size: 14px;
+        font-size: 14.4px;
         line-height: 1.7;
-        color: #e4e4e7;
+        color: #e6e8ee;
     }
 
     #post-body :global(ul),
@@ -208,46 +447,69 @@ const dateLabel = fmt.format(new Date(post.data.date));
     }
 
     #post-body :global(blockquote) {
-        border-left: 2px solid var(--accent-orange);
-        padding-left: 16px;
+        border-left: 1.8px solid var(--accent-orange);
+        padding-left: 14.4px;
         margin: 1.6em 0;
         color: var(--blue-dim);
         font-style: normal;
     }
 
+    #post-body :global(iframe) {
+        border: 0;
+    }
+
     #post-body :global(hr) {
         border: none;
-        border-top: 1px solid var(--border);
+        border-top: 1px dotted var(--rule);
         margin: 2.4em 0;
     }
 
     /* Footer */
     #post-footer {
-        margin-top: 56px;
-        padding-top: 24px;
-        border-top: 1px solid var(--border);
+        margin-top: 50.4px;
+        padding-top: 21.6px;
+        border-top: 1px dotted var(--rule);
     }
 
     #back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 7.2px;
         font-family: var(--font-mono);
-        font-size: 12px;
+        font-size: 12.6px;
         letter-spacing: 0.1em;
         text-transform: uppercase;
         color: var(--blue-dim);
-        text-decoration: none;
-        transition: color 0.15s;
+        transition: color 160ms var(--ease-out);
+    }
+
+    /* Plex Mono's arrow sits low on the line; lift it to the optical centre */
+    .back-arrow {
+        display: inline-block;
+        transform: translateY(-0.09em);
     }
 
     #back-link:hover {
         color: var(--blue);
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 990px) {
         #post {
-            padding: 32px 0 48px;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 0;
+        }
+
+        #toc {
+            display: none;
+        }
+    }
+
+    @media (max-width: 576px) {
+        #post {
+            padding: 30.6px 0 45px;
         }
         #post-title {
-            font-size: clamp(1.5rem, 8vw, 2.4rem);
+            font-size: clamp(1.8rem, 8.5vw, 2.7rem);
         }
     }
 </style>

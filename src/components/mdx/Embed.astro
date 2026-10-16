@@ -1,0 +1,327 @@
+---
+// Zoomable iframe figure for post content.
+//
+//   <Embed src="/figures/some-figure.html" title="What the figure shows" />
+//
+// Renders the interactive frame inline (auto-fitted to its content by the post
+// page script), with a Zoom button that opens a full-screen copy in a dialog.
+// The dialog's copy is only loaded when first opened, so the animation never
+// runs twice on a normal read.
+interface Props {
+    src: string;
+    title: string;
+    /** Fallback inline height in px; the fit script adjusts it after load. */
+    height?: number;
+}
+const { src, title, height = 650 } = Astro.props;
+const uid = `embed-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+<figure class="embed">
+    <div class="embed-stage">
+        <iframe
+            class="embed-frame"
+            src={src}
+            title={title}
+            loading="lazy"
+            style={`height:${height}px`}
+        ></iframe>
+        <button
+            class="embed-zoom"
+            type="button"
+            data-embed-zoom={uid}
+            aria-label={`Zoom figure: ${title}`}
+        >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+                <circle
+                    cx="7"
+                    cy="7"
+                    r="4.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"></circle>
+                <line
+                    x1="10.4"
+                    y1="10.4"
+                    x2="14.4"
+                    y2="14.4"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"></line>
+                <line
+                    x1="5"
+                    y1="7"
+                    x2="9"
+                    y2="7"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                    stroke-linecap="round"></line>
+                <line
+                    x1="7"
+                    y1="5"
+                    x2="7"
+                    y2="9"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                    stroke-linecap="round"></line>
+            </svg>
+            <span>Zoom</span>
+        </button>
+    </div>
+</figure>
+
+<dialog class="embed-dialog" id={uid} aria-label={title}>
+    <div class="embed-dialog-bar">
+        <span class="embed-dialog-hint">Scroll to pan · Esc to close</span>
+        <button class="embed-close" type="button" data-embed-close aria-label="Close">
+            <span aria-hidden="true">✕</span>
+        </button>
+    </div>
+    <div class="embed-dialog-body">
+        <iframe data-embed-src={src} title={title}></iframe>
+    </div>
+</dialog>
+
+<style>
+    .embed {
+        margin: 2em 0;
+    }
+
+    .embed-stage {
+        position: relative;
+        border: 1px dotted var(--rule);
+        background: #0b0b0b;
+    }
+
+    .embed-frame {
+        display: block;
+        width: 100%;
+        border: 0;
+        overflow: hidden;
+    }
+
+    /* On touch devices let gestures pass through to the page */
+    @media (pointer: coarse) {
+        .embed-frame {
+            pointer-events: none;
+        }
+    }
+
+    .embed-zoom {
+        position: absolute;
+        /* lives in the figure's top padding band */
+        top: 10px;
+        right: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        background: rgba(8, 9, 12, 0.82);
+        border: 1px dotted var(--rule);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+        cursor: pointer;
+        transition:
+            color 160ms var(--ease-out),
+            border-color 160ms var(--ease-out),
+            transform 120ms var(--ease-out);
+    }
+
+    .embed-zoom:hover {
+        color: var(--blue);
+        border-color: var(--blue);
+    }
+
+    .embed-zoom:active {
+        transform: scale(0.96);
+    }
+
+    .embed-zoom svg {
+        width: 12px;
+        height: 12px;
+        display: block;
+    }
+
+    /* Lightbox */
+    .embed-dialog {
+        position: fixed;
+        inset: 0;
+        margin: auto;
+        width: fit-content;
+        height: fit-content;
+        max-width: 95vw;
+        max-height: 92vh;
+        padding: 0;
+        border: 1px dotted var(--rule);
+        background: #0a0b0e;
+        color: var(--blue);
+        opacity: 0;
+        transform: scale(0.97);
+        transition:
+            opacity 180ms var(--ease-out),
+            transform 220ms var(--ease-out),
+            overlay 220ms allow-discrete,
+            display 220ms allow-discrete;
+    }
+
+    .embed-dialog[open] {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    @starting-style {
+        .embed-dialog[open] {
+            opacity: 0;
+            transform: scale(0.97);
+        }
+    }
+
+    .embed-dialog::backdrop {
+        background: rgba(8, 9, 12, 0);
+        transition:
+            background 220ms var(--ease-out),
+            overlay 220ms allow-discrete,
+            display 220ms allow-discrete;
+    }
+
+    .embed-dialog[open]::backdrop {
+        background: rgba(8, 9, 12, 0.9);
+    }
+
+    @starting-style {
+        .embed-dialog[open]::backdrop {
+            background: rgba(8, 9, 12, 0);
+        }
+    }
+
+    .embed-dialog-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 8px 12px;
+        border-bottom: 1px dotted var(--rule);
+    }
+
+    .embed-dialog-hint {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--blue-dim);
+    }
+
+    .embed-close {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        background: none;
+        border: 1px dotted var(--rule);
+        color: var(--blue-dim);
+        font-size: 13px;
+        cursor: pointer;
+        transition:
+            color 160ms var(--ease-out),
+            border-color 160ms var(--ease-out),
+            transform 120ms var(--ease-out);
+    }
+
+    .embed-close:hover {
+        color: var(--blue);
+        border-color: var(--blue);
+    }
+
+    .embed-close:active {
+        transform: scale(0.94);
+    }
+
+    .embed-dialog-body {
+        overflow: auto;
+        overscroll-behavior: contain;
+        max-width: 95vw;
+        max-height: 92vh;
+    }
+
+    /* The frame is scaled by the script and stays fully interactive; wheel
+       gestures over it pan the body (the figures forward unhandled wheel). */
+    .embed-dialog-body iframe {
+        display: block;
+        border: 0;
+        transform-origin: 0 0;
+    }
+
+    /* Keep the page still while the lightbox is open */
+    :global(body:has(dialog[open])) {
+        overflow: hidden;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .embed-zoom,
+        .embed-close {
+            transition: none;
+        }
+
+        .embed-dialog,
+        .embed-dialog::backdrop {
+            transition: none;
+        }
+    }
+</style>
+
+<script>
+    // Open/close this component's dialogs; the full-size copy loads lazily.
+    (() => {
+        document.addEventListener("click", (event) => {
+            const target = event.target as HTMLElement | null;
+            if (!target) return;
+
+            const zoom = target.closest<HTMLElement>("[data-embed-zoom]");
+            if (zoom) {
+                const dialog = document.getElementById(zoom.dataset.embedZoom ?? "");
+                if (!(dialog instanceof HTMLDialogElement)) return;
+                const inline = zoom
+                    .closest(".embed-stage")
+                    ?.querySelector<HTMLIFrameElement>(".embed-frame");
+                const frame = dialog.querySelector<HTMLIFrameElement>("[data-embed-src]");
+                const body = dialog.querySelector<HTMLElement>(".embed-dialog-body");
+                if (!inline || !frame || !body) return;
+
+                if (!frame.getAttribute("src")) {
+                    frame.setAttribute("src", frame.dataset.embedSrc ?? "");
+                }
+
+                // Scale the figure so its (width-capped) panel fills the
+                // dialog; the body pans when the scaled frame is taller.
+                const w = inline.offsetWidth;
+                const h = inline.offsetHeight;
+                const maxW = Math.min(window.innerWidth * 0.92, 1600);
+                const scale = Math.min(Math.max(maxW / w, 1), 2.2);
+                frame.style.width = `${w}px`;
+                frame.style.height = `${h}px`;
+                frame.style.transform = `scale(${scale})`;
+                body.style.width = `${Math.round(w * scale)}px`;
+                body.style.height = `${Math.round(h * scale)}px`;
+                body.scrollTop = 0;
+                body.scrollLeft = 0;
+
+                dialog.showModal();
+                return;
+            }
+
+            const close = target.closest("[data-embed-close]");
+            if (close) {
+                close.closest("dialog")?.close();
+                return;
+            }
+
+            if (target instanceof HTMLDialogElement && target.classList.contains("embed-dialog")) {
+                target.close();
+            }
+        });
+    })();
+</script>

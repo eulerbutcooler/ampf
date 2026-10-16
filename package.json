@@ -10,8 +10,10 @@
     "build": "astro build",
     "preview": "astro build && wrangler pages dev",
     "astro": "astro",
+    "sync-now": "node --env-file-if-exists=.env scripts/sync-now.mjs",
+    "spotify-auth": "node --env-file-if-exists=.env scripts/spotify-auth.mjs",
     "generate-types": "wrangler types",
-    "deploy": "astro build && wrangler pages deploy",
+    "deploy": "npm run sync-now && astro build && wrangler pages deploy dist --commit-dirty=true",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
